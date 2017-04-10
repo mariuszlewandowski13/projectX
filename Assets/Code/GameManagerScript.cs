@@ -13,9 +13,9 @@ public class GameManagerScript : MonoBehaviour {
 
 
     //Objects and Positions
-    private Queue<BallQueue> ballsQueues;
+    private Queue<GameObject> balls;
     private GameObject lastBall;
-    private Vector3 levelSpawningPosition;
+    private GameObject levelSpawningPosition;
 
     //flags
     private bool playing = false;
@@ -48,30 +48,41 @@ public class GameManagerScript : MonoBehaviour {
 
     private void Init()
     {
-        ballsQueues = new Queue<BallQueue>();
-        ballsQueues.Enqueue(new BallQueue());
+        balls = new Queue<GameObject>();
     }
 
     private void CreateNewBall()
     {
         if (lastBall == null || CheckSpawningSafePosition())
         {
-            lastBall = Instantiate(ballPrefab, levelSpawningPosition, new Quaternion());
-            lastBall.GetComponent<BallScript>().SetBallObject(ApplicationData.RandomNewColor());
-            ballsQueues.Peek().ballQueue.Enqueue(lastBall);
+            GameObject left;
+            if (lastBall == null)
+            {
+                left = levelSpawningPosition;
+            }
+            else {
+                left = lastBall;
+            }
+
+            GameObject newBall = Instantiate(ballPrefab, levelSpawningPosition.transform.position, new Quaternion());
+            newBall.GetComponent<BallScript>().SetBallObject(ApplicationData.RandomNewColor(), left);
+
+            if (lastBall != null)
+            {
+                lastBall.GetComponent<BallScript>().ballObj.rightNeighbour = newBall;
+            }
+
+            lastBall = newBall;
+            balls.Enqueue(lastBall);
         }
     }
 
     private void MoveBallsForward()
     {
-        foreach (BallQueue queue in ballsQueues)
-        {
-            if (!MovementManager.MoveBalls(queue, actualLevel))
+            if (!MovementManager.MoveBalls(balls, actualLevel))
             {
                 playing = false;
             }
-        }
-        
     }
 
     private void SetLevelSpawningPosition()
@@ -81,10 +92,47 @@ public class GameManagerScript : MonoBehaviour {
 
     private bool CheckSpawningSafePosition()
     {
-        if (Vector3.Distance(levelSpawningPosition, lastBall.transform.position) > spawningSafeDistance)
+        if (Vector3.Distance(levelSpawningPosition.transform.position, lastBall.transform.position) > spawningSafeDistance)
         {
             return true;
         }
         return false;
     }
+
+    public void AddNewBallFromPlayer(GameObject newBall, GameObject collidingBall)
+    {
+        bool isRight;
+        Vector3 newPosition = FindNewPosition(newBall, collidingBall, out isRight);
+        IncreaseSpeed(collidingBall, isRight);
+    }
+
+    private void IncreaseSpeed(GameObject collidingBall, bool isRight)
+    {
+        float increase = 2.0f;
+        bool found = false;
+        foreach (GameObject ball in balls)
+        {
+            if (found)
+            {
+                ball.GetComponent<BallScript>().ballObj.speed *= increase;
+            }
+            else if (ball == collidingBall)
+            {
+
+                found = true;
+                if (isRight)
+                {
+                    ball.GetComponent<BallScript>().ballObj.speed *= increase;
+                }
+            }
+        }
+    }
+
+
+    private Vector3 FindNewPosition(GameObject newBall, GameObject collidingBall, out bool isRight)
+    {//TO DO
+        isRight = true;
+        return new Vector3();
+    }
+    
 }

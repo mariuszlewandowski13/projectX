@@ -7,9 +7,9 @@ public static class MovementManager {
     //const
     private const float distanceToChangeDestination = 0.01f;
 
-    public static bool MoveBalls(BallQueue queue, int actualLevel)
+    public static bool MoveBalls(Queue<GameObject> queue, int actualLevel)
     {
-        foreach (GameObject ball in queue.ballQueue)
+        foreach (GameObject ball in queue)
         {
             BallScript ballScript = ball.GetComponent<BallScript>();
             Vector3 dest = LevelsPoints.levelsPoints[actualLevel][ballScript.ballObj.destination];
@@ -17,14 +17,14 @@ public static class MovementManager {
 
             CheckAndSetSpeed(ballScript.ballObj);
 
-            float calculatedSpeed = (Time.time - ballScript.ballObj.lastPointTime) * queue.speed/ Vector3.Distance(dest, source);
+            float calculatedSpeed = (Time.time - ballScript.ballObj.lastPointTime) * ballScript.ballObj.speed/ Vector3.Distance(dest, source);
 
             Vector3 newPosition =  Vector3.Lerp(source, dest, calculatedSpeed);
             ball.transform.position = newPosition;
 
             if (Vector3.Distance(newPosition, dest) < distanceToChangeDestination)
             {
-                if ((ballScript.ballObj.destination = LevelsPoints.GetNextLevelPoint(ballScript.ballObj.destination, actualLevel, queue.forwardBackward)) == -1)
+                if ((ballScript.ballObj.destination = LevelsPoints.GetNextLevelPoint(ballScript.ballObj.destination, actualLevel, ballScript.ballObj.forwardBackward)) == -1)
                 {
                     return false;
                 }

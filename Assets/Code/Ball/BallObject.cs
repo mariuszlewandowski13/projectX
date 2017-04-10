@@ -31,11 +31,20 @@ public class BallObject {
 
     public float lastPointTime;
 
-    public BallObject(Color newColor)
+    public float speed;
+    public float forwardBackward;
+
+    public GameObject leftNeighbour;
+    public GameObject rightNeighbour;
+
+    public BallObject(Color newColor, GameObject left)
     {
         color = newColor;
         destination = 1;
         lastPointTime = Time.time;
+        speed = 1.0f;
+        forwardBackward = 1.0f;
+        leftNeighbour = left;
     }
 
 }
