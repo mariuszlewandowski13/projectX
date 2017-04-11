@@ -49,7 +49,7 @@ public class PlayerBallsScript : MonoBehaviour {
     private void CreateNewBall()
     {
         myBall = Instantiate(ballPrefab, startPosition , new Quaternion());
-        myBall.GetComponent<BallScript>().SetBallObject(ApplicationData.RandomNewColor(), null); 
+        myBall.GetComponent<BallScript>().SetBallObject(/*ApplicationData.RandomNewColor()*/Color.black, null, null); 
     }
 
     private bool ShootTheBall(Vector3 destination)
@@ -60,7 +60,8 @@ public class PlayerBallsScript : MonoBehaviour {
             myBall.AddComponent<BallFlyingScript>();
             Rigidbody rigid =  myBall.AddComponent<Rigidbody>();
             rigid.useGravity = false;
-            rigid.isKinematic = false;         
+            rigid.isKinematic = false;
+            rigid.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
             rigid.AddForce(force* forceMultiplier, ForceMode.Force);
             myBall = null;
             return true;

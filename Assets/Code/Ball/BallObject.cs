@@ -6,6 +6,8 @@ public class BallObject {
 
     public Color color;
 
+    private GameObject myObject;
+
     private int _source;
     public int source
     {
@@ -14,8 +16,10 @@ public class BallObject {
         }
         private set {
             _source = value;
+            sourcePosition = myObject.transform.position;
         }
     }
+    public Vector3 sourcePosition;
 
     private int _destination;
     public int destination
@@ -23,28 +27,34 @@ public class BallObject {
          set {
             _destination = value;
             source = value - 1;
+            destinationPosition = LevelsPoints.GetPointByIndex(value);
         }
         get {
             return _destination;
         }
     }
+    public Vector3 destinationPosition;
 
-    public float lastPointTime;
+    public float counter = 0.0f;
+   // public float actualLerp = 0.0f;
+    public float counterIncreaser = 0.1f;
 
-    public float speed;
     public float forwardBackward;
 
     public GameObject leftNeighbour;
     public GameObject rightNeighbour;
 
-    public BallObject(Color newColor, GameObject left)
+    public bool isChangingSpeed;
+
+    public BallObject(Color newColor, GameObject left, GameObject right, GameObject myObject)
     {
+        this.myObject = myObject;
         color = newColor;
         destination = 1;
-        lastPointTime = Time.time;
-        speed = 1.0f;
         forwardBackward = 1.0f;
         leftNeighbour = left;
+        rightNeighbour = right;
+        
     }
 
 }

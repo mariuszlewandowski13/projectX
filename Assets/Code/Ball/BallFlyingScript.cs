@@ -5,20 +5,29 @@ public class BallFlyingScript : MonoBehaviour {
     private object collisionLock = new object();
     private bool collide;
 
-    private void OnCollisionEnter(Collision other)
+    private void OnTriggerEnter(Collider other)
     {
         lock (collisionLock)
         {
             if (!collide)
             {
-                if (other.collider.tag == "Ball")
+                if (other.tag == "Ball")
                 {
                     GameObject.Find("GameManager").GetComponent<GameManagerScript>().AddNewBallFromPlayer(gameObject, other.gameObject);
                     collide = true;
-                    Destroy(this);
                 }
             }
             
+        }
+        
+    }
+
+    private void Update()
+    {
+        if (collide)
+        {
+            DestroyImmediate(GetComponent<Rigidbody>());
+            Destroy(this);
         }
         
     }

@@ -6,9 +6,9 @@ public class BallScript : MonoBehaviour {
     public BallObject ballObj;
    
 
-    public void SetBallObject(Color color, GameObject leftNeighbour)
+    public void SetBallObject(Color color, GameObject leftNeighbour, GameObject rightNeighbour)
     {
-        ballObj = new BallObject(color, leftNeighbour);
+        ballObj = new BallObject(color, leftNeighbour, rightNeighbour, gameObject);
         SetBallColor();
     }
 

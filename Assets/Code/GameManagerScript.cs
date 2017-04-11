@@ -21,9 +21,6 @@ public class GameManagerScript : MonoBehaviour {
     private bool playing = false;
     private bool prepareLevel = true;
 
-    //game info
-    private int actualLevel = 0;
-
 
 	void Start () {
         Init();
@@ -49,27 +46,19 @@ public class GameManagerScript : MonoBehaviour {
     private void Init()
     {
         balls = new Queue<GameObject>();
+        LevelsPoints.actualLevel = 0;
     }
 
     private void CreateNewBall()
     {
         if (lastBall == null || CheckSpawningSafePosition())
         {
-            GameObject left;
-            if (lastBall == null)
-            {
-                left = levelSpawningPosition;
-            }
-            else {
-                left = lastBall;
-            }
-
             GameObject newBall = Instantiate(ballPrefab, levelSpawningPosition.transform.position, new Quaternion());
-            newBall.GetComponent<BallScript>().SetBallObject(ApplicationData.RandomNewColor(), left);
+            newBall.GetComponent<BallScript>().SetBallObject(ApplicationData.RandomNewColor(), levelSpawningPosition, lastBall);
 
             if (lastBall != null)
             {
-                lastBall.GetComponent<BallScript>().ballObj.rightNeighbour = newBall;
+                lastBall.GetComponent<BallScript>().ballObj.leftNeighbour = newBall;
             }
 
             lastBall = newBall;
@@ -79,7 +68,7 @@ public class GameManagerScript : MonoBehaviour {
 
     private void MoveBallsForward()
     {
-            if (!MovementManager.MoveBalls(balls, actualLevel))
+            if (!MovementManager.MoveBalls(balls))
             {
                 playing = false;
             }
@@ -87,7 +76,7 @@ public class GameManagerScript : MonoBehaviour {
 
     private void SetLevelSpawningPosition()
     {
-        levelSpawningPosition = LevelsPoints.GetLevelStartPoint(actualLevel);
+        levelSpawningPosition = LevelsPoints.GetLevelStartPoint();
     }
 
     private bool CheckSpawningSafePosition()
@@ -101,38 +90,97 @@ public class GameManagerScript : MonoBehaviour {
 
     public void AddNewBallFromPlayer(GameObject newBall, GameObject collidingBall)
     {
+        Debug.Log("ballAdded");
         bool isRight;
-        Vector3 newPosition = FindNewPosition(newBall, collidingBall, out isRight);
+        int destination;
+        Vector3 newPosition = FindNewPosition(newBall, collidingBall, out isRight, out destination);
         IncreaseSpeed(collidingBall, isRight);
+        InsertIntoBallQueue(newBall, collidingBall, isRight);
+        SetPositionForNewBall(newBall, newPosition, destination, collidingBall.GetComponent<BallScript>().ballObj.counterIncreaser);
+
     }
 
     private void IncreaseSpeed(GameObject collidingBall, bool isRight)
     {
-        float increase = 2.0f;
+        float increase = 0.1f;
         bool found = false;
         foreach (GameObject ball in balls)
         {
-            if (found)
-            {
-                ball.GetComponent<BallScript>().ballObj.speed *= increase;
-            }
-            else if (ball == collidingBall)
-            {
 
+            if (ball == collidingBall)
+            {
                 found = true;
                 if (isRight)
                 {
-                    ball.GetComponent<BallScript>().ballObj.speed *= increase;
+                    ball.GetComponent<BallScript>().ballObj.counterIncreaser += increase;
                 }
+            }else if (!found)
+            {
+                ball.GetComponent<BallScript>().ballObj.counterIncreaser += increase;
             }
         }
     }
 
 
-    private Vector3 FindNewPosition(GameObject newBall, GameObject collidingBall, out bool isRight)
-    {//TO DO
-        isRight = true;
-        return new Vector3();
+    private Vector3 FindNewPosition(GameObject newBall, GameObject collidingBall, out bool isRight, out int destination)
+    {
+        BallObject collidingBallObj = collidingBall.GetComponent<BallScript>().ballObj;
+        Vector3 newPos;
+
+        if (collidingBallObj.rightNeighbour != null)
+        {
+            if (Vector3.Distance(collidingBallObj.leftNeighbour.transform.position, newBall.transform.position) < Vector3.Distance(collidingBallObj.rightNeighbour.transform.position, newBall.transform.position))
+            {
+                newPos = collidingBall.transform.position;
+                isRight = true;
+                destination = collidingBallObj.source;
+            }
+            else {
+                newPos = collidingBallObj.rightNeighbour.transform.position;
+                isRight = false;
+                destination = collidingBallObj.leftNeighbour.GetComponent<BallScript>().ballObj.source;
+            }
+        }
+        else
+        {
+            newPos = new Vector3();
+            isRight = true;
+            destination = 0;
+        }
+        return newPos;
     }
-    
+
+    private void InsertIntoBallQueue(GameObject newBall, GameObject collidingBall, bool isRight)
+    {
+        Queue<GameObject> newQueue = new Queue<GameObject>();
+        foreach (GameObject ball in balls)
+        {
+            if (ball == collidingBall)
+            {
+                if (isRight)
+                {
+                    newQueue.Enqueue(newBall);
+                    newQueue.Enqueue(collidingBall);
+                }
+                else
+                {
+                    newQueue.Enqueue(collidingBall);
+                    newQueue.Enqueue(newBall);
+                }
+            }
+            else {
+                newQueue.Enqueue(ball);
+            }
+        }
+        balls.Clear();
+        balls = newQueue;
+    }
+
+    private void SetPositionForNewBall(GameObject newBall, Vector3 newPos, int destination, float speedIncreaser)
+    {
+        newBall.GetComponent<BallScript>().ballObj.destination = destination;
+        newBall.GetComponent<BallScript>().ballObj.destinationPosition = newPos;
+        newBall.GetComponent<BallScript>().ballObj.sourcePosition = newBall.transform.position;
+        newBall.GetComponent<BallScript>().ballObj.isChangingSpeed = true;
+    }
 }
