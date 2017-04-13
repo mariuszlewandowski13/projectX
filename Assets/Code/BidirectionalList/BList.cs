@@ -62,7 +62,7 @@ public class BList  {
         return null;
     }
 
-    private BListObject NextBListObject()
+    public BListObject NextBListObject()
     {
         if (actual != null)
         {
@@ -72,7 +72,7 @@ public class BList  {
         return null;
     }
 
-    private BListObject PreviousBListObject()
+    public BListObject PreviousBListObject()
     {
         if (actual != null)
         {
@@ -103,9 +103,15 @@ public class BList  {
         else return null;
     }
 
-    private BListObject InitEnumerationFromLeftBListObject()
+    public BListObject InitEnumerationFromLeftBListObject()
     {
         actual = last;
+        return actual;
+    }
+
+    public BListObject InitEnumerationFromRightBListObject()
+    {
+        actual = first;
         return actual;
     }
 
@@ -173,7 +179,15 @@ public class BList  {
 
     }
 
-    
+    public BListObject Find(GameObject obj)
+    {
+        BListObject bListObj = InitEnumerationFromLeftBListObject();
+        do {
+            if (bListObj.value == obj) return bListObj;
+        } while ((bListObj = NextBListObject()) != null);
+
+        return null;
+    }
 }
 
 

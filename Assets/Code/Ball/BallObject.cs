@@ -2,6 +2,10 @@
 
 public class BallObject {
 
+    private static float[] allowedSpeedLevels = new float[] {0.02f, 0.1f, 0.1f };
+
+    private int actualSpeedLevel = 0;
+
     public Color color;
 
     private GameObject myObject;
@@ -48,12 +52,38 @@ public class BallObject {
 
     public float forwardBackward;
 
+    public float speed;
+
+    public bool specialMove;
+
     public BallObject(Color newColor,  GameObject myObject)
     {
         this.myObject = myObject;
         color = newColor;
         destination = 1;
-        forwardBackward = 1.0f;  
+        forwardBackward = 1.0f;
+        speed = 0.02f;
+    }
+
+    public void IncreaseSpeedLevel()
+    {
+        if (actualSpeedLevel + 1 < allowedSpeedLevels.Length)
+        {
+            actualSpeedLevel++;
+            speed = allowedSpeedLevels[actualSpeedLevel];
+            specialMove = true;
+        }
+    }
+
+    public bool DecreaseSpeedLevel()
+    {
+        if (actualSpeedLevel - 1 >= 0)
+        {
+            actualSpeedLevel--;
+            speed = allowedSpeedLevels[actualSpeedLevel];
+            if (actualSpeedLevel == 0) specialMove = false;
+        }
+        return specialMove;
     }
 
 }

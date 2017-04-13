@@ -4,29 +4,42 @@ using UnityEngine;
 
 public static class MovementManager {
 
+    private static float minSpeed = 0.02f;
+
     private static bool playing;
 
     private static float safeDistance = 0.1f;
 
-    public static bool MoveBalls(BList balls, float speed = 0.02f)
+    public static bool specialMove;
+
+    private static bool changeSpecialMoveToFalse;
+
+    public static bool MoveBalls(BList balls)
     {
+        changeSpecialMoveToFalse = specialMove;
         playing = true;
         GameObject actualBall = balls.InitEnumerationFromLeft();
         do
         {
-            MoveBall(actualBall, speed);
+            if(!specialMove || actualBall.GetComponent<BallScript>().ballObj.specialMove)
+            MoveBall(actualBall);
         } while ((actualBall = balls.Next()) != null);
 
+        if (changeSpecialMoveToFalse)
+        {
+            changeSpecialMoveToFalse = false;
+            specialMove = false;
+        }
         return playing;
     }
 
 
-    private static void MoveBall(GameObject ball, float speed)
+    private static void MoveBall(GameObject ball)
     {
         BallObject ballObj = ball.GetComponent<BallScript>().ballObj;
         if (ballObj.lerpVector == new Vector3())
         {
-            CalculateLerpVector(ballObj, ball,  speed);
+            CalculateLerpVector(ballObj, ball);
         }
 
         ball.transform.position += ballObj.lerpVector;
@@ -35,11 +48,16 @@ public static class MovementManager {
         {
             ChangeToNextDestination(ballObj);
         }
+
+        if (ballObj.specialMove == true)
+        {
+            changeSpecialMoveToFalse = false;
+        }
     }
 
-    private static void CalculateLerpVector(BallObject ballObj, GameObject ball, float speed)
+    private static void CalculateLerpVector(BallObject ballObj, GameObject ball)
     {
-        ballObj.lerpVector = (Vector3.Lerp(ballObj.sourcePosition, ballObj.destinationPosition, speed) - ball.transform.position)/ Vector3.Distance(ballObj.sourcePosition, ballObj.destinationPosition);
+        ballObj.lerpVector = (Vector3.Lerp(ballObj.sourcePosition, ballObj.destinationPosition, ballObj.speed) - ball.transform.position)/ Vector3.Distance(ballObj.sourcePosition, ballObj.destinationPosition); 
     }
 
     private static void ChangeToNextDestination(BallObject ballObj)
@@ -48,5 +66,9 @@ public static class MovementManager {
         {
             playing = false;
         }
+        ballObj.DecreaseSpeedLevel();
+
+        
+        
     }
 }
