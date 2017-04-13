@@ -82,6 +82,8 @@
     <Compile Include="Assets\Code\Ball\BallFlyingScript.cs" />
     <Compile Include="Assets\Code\Ball\BallObject.cs" />
     <Compile Include="Assets\Code\Ball\BallScript.cs" />
+    <Compile Include="Assets\Code\BidirectionalList\BList.cs" />
+    <Compile Include="Assets\Code\BidirectionalList\BListObject.cs" />
     <Compile Include="Assets\Code\Dev\PointScript.cs" />
     <Compile Include="Assets\Code\GameManagerScript.cs" />
     <Compile Include="Assets\Code\LevelsPoints.cs" />

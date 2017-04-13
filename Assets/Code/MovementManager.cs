@@ -4,93 +4,49 @@ using UnityEngine;
 
 public static class MovementManager {
 
-    //const
-    private const float distanceToChangeDestination = 0.01f;
+    private static bool playing;
 
-    private static int counter = 0;
+    private static float safeDistance = 0.1f;
 
-    private static float firstFrameTime = 0.0f;
-    private static float timeBetweenFrames = 0.0f;
-
-    private static GameObject flagObjectToDecreaseSpeed;
-
-    private static bool decreasingSpeed;
-
-    public static bool MoveBalls(Queue<GameObject> queue)
+    public static bool MoveBalls(BList balls, float speed = 0.02f)
     {
-        if (timeBetweenFrames == 0.0f)
+        playing = true;
+        GameObject actualBall = balls.InitEnumerationFromLeft();
+        do
         {
-            if (firstFrameTime == 0.0f)
-            {
-                firstFrameTime = Time.time;
-                return true;
-            }
-            timeBetweenFrames = Time.time - firstFrameTime;
-        }
+            MoveBall(actualBall, speed);
+        } while ((actualBall = balls.Next()) != null);
 
-        if (flagObjectToDecreaseSpeed != null)
-        {
-            decreasingSpeed = true;
-        }
-
-        foreach (GameObject ball in queue)
-        {
-            if (decreasingSpeed)
-            {
-                if (ball == flagObjectToDecreaseSpeed)
-                {
-                    decreasingSpeed = false;
-                    flagObjectToDecreaseSpeed = null;
-                }
-                else {
-                    ball.GetComponent<BallScript>().ballObj.counterIncreaser -= 0.1f;
-                }
-            }
-
-            BallScript ballScript = ball.GetComponent<BallScript>();
-            Vector3 dest = ballScript.ballObj.destinationPosition;
-            Vector3 source = ballScript.ballObj.sourcePosition;
-
-                float calculatedLerp = timeBetweenFrames / Vector3.Distance(dest, source);
-                //CheckAndSetLerp(ballScript.ballObj, calculatedLerp);
-
-                Vector3 newPosition = Vector3.Lerp(source, dest, calculatedLerp*ballScript.ballObj.counter);
-                ball.transform.position = newPosition;
-                ballScript.ballObj.counter += ballScript.ballObj.counterIncreaser;
-                if (Vector3.Distance(newPosition, dest) < distanceToChangeDestination)
-                {
-                    if ((ballScript.ballObj.destination = LevelsPoints.GetNextLevelPoint(ballScript.ballObj.destination, ballScript.ballObj.forwardBackward)) == -1)
-                    {
-                        return false;
-                    }
-                    else
-                    {
-
-                        if (ballScript.ballObj.isChangingSpeed)
-                        {
-                            ballScript.ballObj.isChangingSpeed = false;
-                            flagObjectToDecreaseSpeed = ball;
-                        }
-
-                        ballScript.ballObj.counter = 0;
-                        SetLerp(ballScript.ballObj, 0.0f);
-                    }
-                }
-            }
-        counter++;
-        return true;
+        return playing;
     }
 
-    private static void CheckAndSetLerp(BallObject ballObj, float lerp)
+
+    private static void MoveBall(GameObject ball, float speed)
     {
-        //if (ballObj.actualLerp == 0.0f)
-        //{
-        //    SetLerp(ballObj, lerp);
-        //}
+        BallObject ballObj = ball.GetComponent<BallScript>().ballObj;
+        if (ballObj.lerpVector == new Vector3())
+        {
+            CalculateLerpVector(ballObj, ball,  speed);
+        }
+
+        ball.transform.position += ballObj.lerpVector;
+
+        if (Vector3.Distance(ball.transform.position, ballObj.destinationPosition) < safeDistance)
+        {
+            ChangeToNextDestination(ballObj);
+        }
     }
 
-    private static void SetLerp(BallObject ballObj, float lerp)
+    private static void CalculateLerpVector(BallObject ballObj, GameObject ball, float speed)
     {
-       // ballObj.actualLerp = lerp;
+        ballObj.lerpVector = (Vector3.Lerp(ballObj.sourcePosition, ballObj.destinationPosition, speed) - ball.transform.position)/ Vector3.Distance(ballObj.sourcePosition, ballObj.destinationPosition);
+    }
+
+    private static void ChangeToNextDestination(BallObject ballObj)
+    {
+        if ((ballObj.destination = LevelsPoints.GetNextLevelPoint(ballObj.destination, ballObj.forwardBackward)) < 0)
+        {
+            playing = false;
+        }
     }
 }

@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class BallObject {
 
@@ -33,28 +31,29 @@ public class BallObject {
             return _destination;
         }
     }
-    public Vector3 destinationPosition;
 
-    public float counter = 0.0f;
-   // public float actualLerp = 0.0f;
-    public float counterIncreaser = 0.1f;
+    private Vector3 _destinationPosition;
+    public Vector3 destinationPosition
+    {
+        get {
+            return _destinationPosition;
+        }
+        set {
+            _destinationPosition = value;
+            lerpVector = new Vector3();
+        }
+    }
+
+    public Vector3 lerpVector;
 
     public float forwardBackward;
 
-    public GameObject leftNeighbour;
-    public GameObject rightNeighbour;
-
-    public bool isChangingSpeed;
-
-    public BallObject(Color newColor, GameObject left, GameObject right, GameObject myObject)
+    public BallObject(Color newColor,  GameObject myObject)
     {
         this.myObject = myObject;
         color = newColor;
         destination = 1;
-        forwardBackward = 1.0f;
-        leftNeighbour = left;
-        rightNeighbour = right;
-        
+        forwardBackward = 1.0f;  
     }
 
 }

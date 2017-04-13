@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 
-public class BallFlyingScript : MonoBehaviour {
+public class BallFlyingScript : MonoBehaviour
+{
 
     private object collisionLock = new object();
     private bool collide;
@@ -17,9 +18,9 @@ public class BallFlyingScript : MonoBehaviour {
                     collide = true;
                 }
             }
-            
+
         }
-        
+
     }
 
     private void Update()
@@ -29,6 +30,6 @@ public class BallFlyingScript : MonoBehaviour {
             DestroyImmediate(GetComponent<Rigidbody>());
             Destroy(this);
         }
-        
+
     }
 }

@@ -49,7 +49,7 @@ public class PlayerBallsScript : MonoBehaviour {
     private void CreateNewBall()
     {
         myBall = Instantiate(ballPrefab, startPosition , new Quaternion());
-        myBall.GetComponent<BallScript>().SetBallObject(/*ApplicationData.RandomNewColor()*/Color.black, null, null); 
+        myBall.GetComponent<BallScript>().SetBallObject(/*ApplicationData.RandomNewColor()*/Color.black); 
     }
 
     private bool ShootTheBall(Vector3 destination)

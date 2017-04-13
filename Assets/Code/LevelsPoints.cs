@@ -20,12 +20,9 @@ public static class LevelsPoints{
        
     }
 
-    public static GameObject GetLevelStartPoint()
+    public static Vector3 GetLevelStartPoint()
     {
-        GameObject levelSpawningPosition = new GameObject();
-        levelSpawningPosition.transform.position = levelsPoints[actualLevel][0];
-
-        return levelSpawningPosition;   
+        return levelsPoints[actualLevel][0];   
     }
 
     public static int GetNextLevelPoint(int actualPointNumber, float forwardBackward)
