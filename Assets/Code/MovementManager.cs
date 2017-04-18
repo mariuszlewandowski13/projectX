@@ -4,11 +4,9 @@ using UnityEngine;
 
 public static class MovementManager {
 
-    private static float minSpeed = 0.02f;
-
     private static bool playing;
 
-    private static float safeDistance = 0.1f;
+    public static float safeDistance = 0.02f;
 
     public static bool specialMove;
 
@@ -39,7 +37,7 @@ public static class MovementManager {
         BallObject ballObj = ball.GetComponent<BallScript>().ballObj;
         if (ballObj.lerpVector == new Vector3())
         {
-            CalculateLerpVector(ballObj, ball);
+            CalculateLerpVector(ballObj);
         }
 
         ball.transform.position += ballObj.lerpVector;
@@ -52,23 +50,25 @@ public static class MovementManager {
         if (ballObj.specialMove == true)
         {
             changeSpecialMoveToFalse = false;
+            
         }
     }
 
-    private static void CalculateLerpVector(BallObject ballObj, GameObject ball)
+    public static void CalculateLerpVector(BallObject ballObj)
     {
-        ballObj.lerpVector = (Vector3.Lerp(ballObj.sourcePosition, ballObj.destinationPosition, ballObj.speed) - ball.transform.position)/ Vector3.Distance(ballObj.sourcePosition, ballObj.destinationPosition); 
+        ballObj.lerpVector = (Vector3.Lerp(ballObj.sourcePosition, ballObj.destinationPosition, ballObj.speed) - ballObj.sourcePosition) / Vector3.Distance(ballObj.sourcePosition, ballObj.destinationPosition); 
     }
 
-    private static void ChangeToNextDestination(BallObject ballObj)
+    public static void ChangeToNextDestination(BallObject ballObj, bool decrease = true)
     {
         if ((ballObj.destination = LevelsPoints.GetNextLevelPoint(ballObj.destination, ballObj.forwardBackward)) < 0)
         {
             playing = false;
         }
-        ballObj.DecreaseSpeedLevel();
-
-        
+        if (decrease && ballObj.forwardBackward > 0)
+        {
+            ballObj.DecreaseSpeedLevel();
+        }
         
     }
 }

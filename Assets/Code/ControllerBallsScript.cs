@@ -14,7 +14,7 @@ public class ControllerBallsScript : MonoBehaviour {
 
     private float lastShotTime;
 
-    private float timeFromShootToSpawn = 2.0f;
+    private float timeFromShootToSpawn = 0.5f;
 
     private Valve.VR.EVRButtonId triggerButton = Valve.VR.EVRButtonId.k_EButton_SteamVR_Trigger;
     private Valve.VR.EVRButtonId gripButton = Valve.VR.EVRButtonId.k_EButton_Grip;
@@ -79,7 +79,7 @@ public class ControllerBallsScript : MonoBehaviour {
     private void CreateNewBall()
     {
         myBall = Instantiate(ballPrefab, startPosition.position, new Quaternion());
-        myBall.GetComponent<BallScript>().SetBallObject(/*ApplicationData.RandomNewColor()*/Color.black);
+        myBall.GetComponent<BallScript>().SetBallObject(ApplicationData.RandomNewColor()/*Color.black*/);
         myBall.transform.parent = startPosition;
     }
 

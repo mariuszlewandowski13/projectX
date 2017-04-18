@@ -2,7 +2,7 @@
 
 public class BallObject {
 
-    private static float[] allowedSpeedLevels = new float[] {0.02f, 0.1f, 0.1f };
+    private static float[] allowedSpeedLevels = new float[] {0.01f, 0.02f, 0.02f };
 
     private int actualSpeedLevel = 0;
 
@@ -10,17 +10,7 @@ public class BallObject {
 
     private GameObject myObject;
 
-    private int _source;
-    public int source
-    {
-        get {
-            return _source;
-        }
-        private set {
-            _source = value;
-            sourcePosition = myObject.transform.position;
-        }
-    }
+
     public Vector3 sourcePosition;
 
     private int _destination;
@@ -28,7 +18,7 @@ public class BallObject {
     {
          set {
             _destination = value;
-            source = value - 1;
+            sourcePosition = myObject.transform.position;
             destinationPosition = LevelsPoints.GetPointByIndex(value);
         }
         get {
@@ -48,7 +38,17 @@ public class BallObject {
         }
     }
 
-    public Vector3 lerpVector;
+    private Vector3 _lerpVector;
+    public Vector3 lerpVector {
+        get {
+            return _lerpVector;
+        }
+        set {
+                _lerpVector = value;
+
+            
+        }
+    }
 
     public float forwardBackward;
 
@@ -62,7 +62,7 @@ public class BallObject {
         color = newColor;
         destination = 1;
         forwardBackward = 1.0f;
-        speed = 0.02f;
+        speed = allowedSpeedLevels[0];
     }
 
     public void IncreaseSpeedLevel()

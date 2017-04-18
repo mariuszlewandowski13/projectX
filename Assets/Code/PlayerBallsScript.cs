@@ -14,7 +14,7 @@ public class PlayerBallsScript : MonoBehaviour {
 
     private float lastShotTime;
 
-    private float timeFromShootToSpawn = 2.0f;
+    private float timeFromShootToSpawn = 0.5f;
 
      void Start()
     {
@@ -34,8 +34,7 @@ public class PlayerBallsScript : MonoBehaviour {
                 if (ShootTheBall(hit.point))
                 {
                     SetTimeForSpawningNewBall();
-                }
-                
+                }   
             }
         }
 
@@ -49,7 +48,7 @@ public class PlayerBallsScript : MonoBehaviour {
     private void CreateNewBall()
     {
         myBall = Instantiate(ballPrefab, startPosition , new Quaternion());
-        myBall.GetComponent<BallScript>().SetBallObject(/*ApplicationData.RandomNewColor()*/Color.black); 
+        myBall.GetComponent<BallScript>().SetBallObject(ApplicationData.RandomNewColor()/*Color.black*/); 
     }
 
     private bool ShootTheBall(Vector3 destination)

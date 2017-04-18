@@ -143,7 +143,7 @@ public class BList  {
         count++;
     }
 
-    public void Insert(GameObject objectToInsert, GameObject neighbour, bool neighbourIsRight)
+    public BListObject Insert(GameObject objectToInsert, GameObject neighbour, bool neighbourIsRight)
     {
         BListObject newObj = new BListObject();
         newObj.value = objectToInsert;
@@ -177,6 +177,8 @@ public class BList  {
             obj.rightNeighbour = newObj;
         }
 
+        return newObj;
+
     }
 
     public BListObject Find(GameObject obj)
@@ -187,6 +189,56 @@ public class BList  {
         } while ((bListObj = NextBListObject()) != null);
 
         return null;
+    }
+
+    public void Remove(GameObject ball)
+    {
+        BListObject ballToRemove = Find(ball);
+        if (ballToRemove.rightNeighbour != null)
+        {
+            ballToRemove.rightNeighbour.leftNeighbour = ballToRemove.leftNeighbour;
+        }
+        if (ballToRemove.leftNeighbour != null)
+        {
+            ballToRemove.leftNeighbour.rightNeighbour = ballToRemove.rightNeighbour;
+        }
+        count--;
+    }
+
+    public void Remove(BListObject ballToRemove)
+    {
+        if (ballToRemove.rightNeighbour != null)
+        {
+            ballToRemove.rightNeighbour.leftNeighbour = ballToRemove.leftNeighbour;
+        }
+        if (ballToRemove.leftNeighbour != null)
+        {
+            ballToRemove.leftNeighbour.rightNeighbour = ballToRemove.rightNeighbour;
+        }
+        if (ballToRemove == first)
+        {
+            if (ballToRemove.rightNeighbour != null)
+            {
+                first = ballToRemove.rightNeighbour;
+            }
+            else if (ballToRemove.leftNeighbour != null)
+            {
+                first = ballToRemove.leftNeighbour;
+            }
+        }
+
+        if (ballToRemove == last)
+        {
+            if (ballToRemove.leftNeighbour != null)
+            {
+                last = ballToRemove.leftNeighbour;
+            }
+            else if (ballToRemove.rightNeighbour != null)
+            {
+                last = ballToRemove.rightNeighbour;
+            }
+        }
+        count--;
     }
 }
 
