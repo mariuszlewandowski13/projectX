@@ -21,6 +21,16 @@ public class GameManagerScript : MonoBehaviour {
     private List<BListObject> ballsThatCouldBeInSequence;
     private List<BListObject> ballsThatHasToReturnWithSequence;
 
+    private static int ballsCount;
+    private static int maxBallsCount;
+
+    public static bool canInstantiate
+    {
+        get {
+            return ballsCount < maxBallsCount;
+        }
+    }
+
     #endregion
 
 
@@ -38,44 +48,64 @@ public class GameManagerScript : MonoBehaviour {
         levelSpawningPosition = LevelsPoints.GetLevelStartPoint();
         ballsThatCouldBeInSequence = new List<BListObject>();
         ballsThatHasToReturnWithSequence = new List<BListObject>();
+        ballsCount = 0;
+        maxBallsCount = 20;
     }
 
-    private void Update()
+    private void LateUpdate()
     {
+        CheckWinningConditions();
         CheckAndCreateNewBall();
         CheckAndRemoveBallsInSequence();
     }
 
-    private void CheckAndRemoveBallsInSequence()
+    private void CheckWinningConditions()
     {
-        List<BListObject> removedBalls = new List<BListObject>();
-        foreach (BListObject ball in ballsThatCouldBeInSequence)
+        if (playing)
         {
-            if (!ball.value.GetComponent<BallScript>().ballObj.specialMove)
+            if (!canInstantiate && balls.count == 0)
             {
-                CheckAndRemoveBallsByColor(ball.value);
-                removedBalls.Add(ball);
+                Debug.Log("Won!!!");
+                playing = false;
             }
         }
+    }
 
-        foreach (BListObject ball in removedBalls)
+    private void CheckAndRemoveBallsInSequence()
+    {
+        if (!MovementManager.specialMove)
         {
-            ballsThatCouldBeInSequence.Remove(ball);
+            List<BListObject> removedBalls = new List<BListObject>();
+            foreach (BListObject ball in ballsThatCouldBeInSequence)
+            {
+                if (!ball.value.GetComponent<BallScript>().ballObj.specialMove)
+                {
+                    CheckAndRemoveBallsByColor(ball);
+                    removedBalls.Add(ball);
+                }
+            }
+
+            foreach (BListObject ball in removedBalls)
+            {
+                ballsThatCouldBeInSequence.Remove(ball);
+            }
+
+            ReturnBallsAfterRemovingBallsInSequence();
         }
-
-        ReturnBallsAfterRemovingBallsInSequence();
-
     }
 
     private void ReturnBallsAfterRemovingBallsInSequence()
     {
         foreach (BListObject ball in ballsThatHasToReturnWithSequence)
         {
-            SetBallsToReturn(ball);
-            //MovementManager.specialMove = true;
+            if ((canInstantiate) || (balls.Last != ball.value))
+            {
+                SetBallsToReturn(ball);
+            }
+            
+           // MovementManager.specialMove = true;
         }
         ballsThatHasToReturnWithSequence.Clear();
-        
     }
 
     private void SetBallsToReturn(BListObject ball)
@@ -84,20 +114,21 @@ public class GameManagerScript : MonoBehaviour {
         {
             ball.value.GetComponent<BallScript>().ballObj.forwardBackward = -ball.value.GetComponent<BallScript>().ballObj.forwardBackward;
             ball.value.GetComponent<BallScript>().ballObj.destination--;
-            ball.value.GetComponent<BallScript>().ballObj.IncreaseSpeedLevel();
-            ball = ball.rightNeighbour;
+            ball.value.GetComponent<BallScript>().ballObj.IncreaseSpeedLevel(false);
+            //Debug.Log(ball.value.name);
+            ball = ball.rightNeighbour; 
         }
     }
 
     private void CheckAndCreateNewBall()
     {
         if (playing)
-        {
+        {    
+            playing = MovementManager.MoveBalls(balls);
             if (CheckSpawningSafe())
             {
                 CreateNewBall();
             }
-            playing = MovementManager.MoveBalls(balls);
         }
 
     }
@@ -105,14 +136,16 @@ public class GameManagerScript : MonoBehaviour {
     private void CreateNewBall()
     {
         GameObject newBall = Instantiate(ballPrefab, levelSpawningPosition, new Quaternion());
-        newBall.GetComponent<BallScript>().SetBallObject(ApplicationData.RandomNewColor());
+        newBall.GetComponent<BallScript>().SetBallObject(ApplicationData.RandomNewColorForBoard());
+        newBall.name = "Ball" + ApplicationData.GetBallIndex().ToString();
         newBall.tag = "Ball";
         balls.AppendLast(newBall);
+        ballsCount++;
     }
 
     private bool CheckSpawningSafe()
     {
-        if (balls.Last == null || Vector3.Distance(balls.Last.transform.position, levelSpawningPosition) >= spawningSafeDistance)
+        if ((canInstantiate) && (balls.Last == null || Vector3.Distance(balls.Last.transform.position, levelSpawningPosition) >= spawningSafeDistance ) && !MovementManager.specialMove)
         {
             return true;
         }
@@ -194,8 +227,8 @@ public class GameManagerScript : MonoBehaviour {
         BallObject ballObj = actual.value.GetComponent<BallScript>().ballObj;
 
         bool curveChange = false;
-
         ballObj.destination--;
+        
         ballObj.destinationPosition = positionForFirstBall;
         ballObj.IncreaseSpeedLevel();
         if (actual.value != newBall)
@@ -224,18 +257,19 @@ public class GameManagerScript : MonoBehaviour {
         }
     }
 
-    private void CheckAndRemoveBallsByColor(GameObject ballInSequence)
+    private void CheckAndRemoveBallsByColor(BListObject ballInSequence)
     {
         if (CheckBallsToRemove(ballInSequence))
         {
-            RemoveBallsInSequence(ballInSequence);
+            RemoveBallsInSequence(ballInSequence.value);
         }
     }
 
-    private bool CheckBallsToRemove(GameObject ballInSequence)
+    private bool CheckBallsToRemove(BListObject ballInSequence)
     {
-        Color color = ballInSequence.GetComponent<BallScript>().ballObj.color;
-        BListObject listObject = balls.Find(ballInSequence);
+        Color color = ballInSequence.value.GetComponent<BallScript>().ballObj.color;
+        BListObject listObject = ballInSequence;
+
         if (listObject.rightNeighbour != null)
         {
             if (listObject.leftNeighbour != null)
@@ -246,24 +280,25 @@ public class GameManagerScript : MonoBehaviour {
                 }
             }
 
-            if (listObject.rightNeighbour.rightNeighbour != null)
+            if (listObject.rightNeighbour.rightNeighbour != null && !ballInSequence.mustBeCenterPoint)
             {
                 if (listObject.rightNeighbour.value.GetComponent<BallScript>().ballObj.color == color && listObject.rightNeighbour.rightNeighbour.value.GetComponent<BallScript>().ballObj.color == color)
                 {
                     return true;
                 }
             }
-        } else if (listObject.leftNeighbour != null)
+        }
+
+        if (listObject.leftNeighbour != null)
         {
             if (listObject.leftNeighbour.leftNeighbour != null)
             {
-                if (listObject.leftNeighbour.value.GetComponent<BallScript>().ballObj.color == color && listObject.rightNeighbour.leftNeighbour.leftNeighbour.value.GetComponent<BallScript>().ballObj.color == color)
+                if (listObject.leftNeighbour.value.GetComponent<BallScript>().ballObj.color == color && listObject.leftNeighbour.leftNeighbour.value.GetComponent<BallScript>().ballObj.color == color)
                 {
                     return true;
                 }
             }
         }
-
         return false;
     }
 
@@ -274,6 +309,7 @@ public class GameManagerScript : MonoBehaviour {
 
         BListObject pivotBall = balls.Find(ballInSequence);
         BListObject actualListObj = pivotBall;
+
 
         while (actualListObj != null && actualListObj.value.GetComponent<BallScript>().ballObj.color == color)
         {
@@ -315,15 +351,38 @@ public class GameManagerScript : MonoBehaviour {
     public void ChangeBallDirection(GameObject ball)
     {
         BListObject listObj = balls.Find(ball);
+        listObj.mustBeCenterPoint = true;
             while (listObj != null)
             {
             listObj.value.GetComponent<BallScript>().ballObj.forwardBackward = -listObj.value.GetComponent<BallScript>().ballObj.forwardBackward;
             listObj.value.GetComponent<BallScript>().ballObj.destination ++;
             listObj.value.GetComponent<BallScript>().ballObj.DecreaseSpeedLevel();
             listObj = listObj.rightNeighbour;
+
             }
-
         ballsThatCouldBeInSequence.Add(balls.Find(ball));
+    }
 
+    public List<Color> GetAllColorsOnBoard()
+    {
+        List<Color> colors = new List<Color>();
+
+        if (balls != null)
+        {
+            BListObject actual = balls.InitEnumerationFromLeftBListObject();
+            if (actual != null)
+            {
+                do
+                {
+                    Color color = actual.value.GetComponent<BallScript>().ballObj.color;
+                    if (!colors.Contains(color))
+                    {
+                        colors.Add(color);
+                    }
+
+                } while ((actual = balls.NextBListObject()) != null);
+            }
+        }
+        return colors;
     }
 }

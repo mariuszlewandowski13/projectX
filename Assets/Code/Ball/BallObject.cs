@@ -1,19 +1,27 @@
 ﻿using UnityEngine;
+using System;
 
+[Serializable]
 public class BallObject {
 
-    private static float[] allowedSpeedLevels = new float[] {0.01f, 0.02f, 0.02f };
+    private static int[] allowedSpeedLevels = new int[] {5, 25};
 
     private int actualSpeedLevel = 0;
+
+    public int forCounter
+    {
+        get {
+            return allowedSpeedLevels[actualSpeedLevel];
+        }
+    }
 
     public Color color;
 
     private GameObject myObject;
 
-
     public Vector3 sourcePosition;
 
-    private int _destination;
+    public int _destination;
     public int destination
     {
          set {
@@ -26,7 +34,7 @@ public class BallObject {
         }
     }
 
-    private Vector3 _destinationPosition;
+    public Vector3 _destinationPosition;
     public Vector3 destinationPosition
     {
         get {
@@ -38,21 +46,19 @@ public class BallObject {
         }
     }
 
-    private Vector3 _lerpVector;
+    public Vector3 _lerpVector;
     public Vector3 lerpVector {
         get {
             return _lerpVector;
         }
         set {
-                _lerpVector = value;
-
-            
+                _lerpVector = value;  
         }
     }
 
     public float forwardBackward;
 
-    public float speed;
+    public float speed = 0.001f;
 
     public bool specialMove;
 
@@ -62,17 +68,15 @@ public class BallObject {
         color = newColor;
         destination = 1;
         forwardBackward = 1.0f;
-        speed = allowedSpeedLevels[0];
     }
 
-    public void IncreaseSpeedLevel()
+    public void IncreaseSpeedLevel(bool specialMo = true)
     {
         if (actualSpeedLevel + 1 < allowedSpeedLevels.Length)
         {
             actualSpeedLevel++;
-            speed = allowedSpeedLevels[actualSpeedLevel];
-            specialMove = true;
         }
+        specialMove = specialMo;
     }
 
     public bool DecreaseSpeedLevel()
@@ -80,10 +84,11 @@ public class BallObject {
         if (actualSpeedLevel - 1 >= 0)
         {
             actualSpeedLevel--;
-            speed = allowedSpeedLevels[actualSpeedLevel];
             if (actualSpeedLevel == 0) specialMove = false;
         }
         return specialMove;
     }
+
+    
 
 }

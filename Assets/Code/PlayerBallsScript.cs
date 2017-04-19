@@ -14,7 +14,7 @@ public class PlayerBallsScript : MonoBehaviour {
 
     private float lastShotTime;
 
-    private float timeFromShootToSpawn = 0.5f;
+    private float timeFromShootToSpawn = 1.0f;
 
      void Start()
     {
@@ -48,7 +48,8 @@ public class PlayerBallsScript : MonoBehaviour {
     private void CreateNewBall()
     {
         myBall = Instantiate(ballPrefab, startPosition , new Quaternion());
-        myBall.GetComponent<BallScript>().SetBallObject(ApplicationData.RandomNewColor()/*Color.black*/); 
+        myBall.name = "Ball" + ApplicationData.GetBallIndex().ToString();
+        myBall.GetComponent<BallScript>().SetBallObject(ApplicationData.RandomNewColorForPlayer()/*Color.black*/); 
     }
 
     private bool ShootTheBall(Vector3 destination)
@@ -56,7 +57,7 @@ public class PlayerBallsScript : MonoBehaviour {
         if (myBall != null)
         {
             Vector3 force = destination - startPosition;
-            myBall.AddComponent<BallFlyingScript>();
+            myBall.AddComponent<BallFlyingScript>().myOldParent = Camera.main.gameObject;
             Rigidbody rigid =  myBall.AddComponent<Rigidbody>();
             rigid.useGravity = false;
             rigid.isKinematic = false;

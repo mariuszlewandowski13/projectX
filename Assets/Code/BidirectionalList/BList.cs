@@ -6,6 +6,8 @@ public class BList  {
     private BListObject actual;
     private BListObject last;
 
+    private object addingLock = new object();
+
     public GameObject Last
     {
        get {
@@ -117,66 +119,77 @@ public class BList  {
 
     public void AppendLast(GameObject value)
     {
-        BListObject newListObject = new BListObject();
-        newListObject.value = value;
-
-        if (first == null)
+        lock(addingLock)
         {
-            first = newListObject;
+            BListObject newListObject = new BListObject();
+            newListObject.value = value;
+
+            if (first == null)
+            {
+                first = newListObject;
+                last = newListObject;
+                count++;
+                return;
+            }
+
+            if (count == 1)
+            {
+                first.leftNeighbour = newListObject;
+                newListObject.rightNeighbour = first;
+                last = newListObject;
+                count++;
+                return;
+            }
+
+            last.leftNeighbour = newListObject;
+            newListObject.rightNeighbour = last;
             last = newListObject;
             count++;
-            return;
         }
-
-        if (count == 1)
-        {
-            first.leftNeighbour = newListObject;
-            newListObject.rightNeighbour = first;
-            last = newListObject;
-            count++;
-            return;
-        }
-
-        last.leftNeighbour = newListObject;
-        newListObject.rightNeighbour = last;
-        last = newListObject;
-        count++;
+        
     }
 
     public BListObject Insert(GameObject objectToInsert, GameObject neighbour, bool neighbourIsRight)
     {
         BListObject newObj = new BListObject();
-        newObj.value = objectToInsert;
-
-        BListObject obj = InitEnumerationFromLeftBListObject();
-        do {
-            if (obj.value == neighbour) break;
-        } while ((obj = NextBListObject()) != null );
-
-        if (neighbourIsRight)
+        lock (addingLock)
         {
-            newObj.leftNeighbour = obj.leftNeighbour;
-            newObj.rightNeighbour = obj;
+            newObj.value = objectToInsert;
 
-            if (obj.leftNeighbour != null)
+            BListObject obj = Find(neighbour);
+
+            if (neighbourIsRight)
             {
-                obj.leftNeighbour.rightNeighbour = newObj;
+                newObj.leftNeighbour = obj.leftNeighbour;
+                newObj.rightNeighbour = obj;
+
+                if (obj.leftNeighbour != null)
+                {
+                    obj.leftNeighbour.rightNeighbour = newObj;
+                }
+                else {
+                    last = newObj;
+                }
+
+                obj.leftNeighbour = newObj;
+            }
+            else {
+                newObj.leftNeighbour = obj;
+                newObj.rightNeighbour = obj.rightNeighbour;
+
+                if (obj.rightNeighbour != null)
+                {
+                    obj.rightNeighbour.leftNeighbour = newObj;
+                }
+                else {
+                    first = newObj;
+                }
+
+                obj.rightNeighbour = newObj;
             }
 
-            obj.leftNeighbour = newObj;
+            count++;
         }
-        else {
-            newObj.leftNeighbour = obj;
-            newObj.rightNeighbour = obj.rightNeighbour;
-
-            if (obj.rightNeighbour != null)
-            {
-                obj.rightNeighbour.leftNeighbour = newObj;
-            }
-
-            obj.rightNeighbour = newObj;
-        }
-
         return newObj;
 
     }
@@ -189,20 +202,6 @@ public class BList  {
         } while ((bListObj = NextBListObject()) != null);
 
         return null;
-    }
-
-    public void Remove(GameObject ball)
-    {
-        BListObject ballToRemove = Find(ball);
-        if (ballToRemove.rightNeighbour != null)
-        {
-            ballToRemove.rightNeighbour.leftNeighbour = ballToRemove.leftNeighbour;
-        }
-        if (ballToRemove.leftNeighbour != null)
-        {
-            ballToRemove.leftNeighbour.rightNeighbour = ballToRemove.rightNeighbour;
-        }
-        count--;
     }
 
     public void Remove(BListObject ballToRemove)
@@ -225,6 +224,10 @@ public class BList  {
             {
                 first = ballToRemove.leftNeighbour;
             }
+            else
+            {
+                first = null;
+            }
         }
 
         if (ballToRemove == last)
@@ -236,6 +239,9 @@ public class BList  {
             else if (ballToRemove.rightNeighbour != null)
             {
                 last = ballToRemove.rightNeighbour;
+            }
+            else {
+                last = null;
             }
         }
         count--;

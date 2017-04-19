@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+
 public class BallScript : MonoBehaviour {
+    [SerializeField]
     public BallObject ballObj;
    
 

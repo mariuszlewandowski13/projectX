@@ -14,7 +14,7 @@ public class ControllerBallsScript : MonoBehaviour {
 
     private float lastShotTime;
 
-    private float timeFromShootToSpawn = 0.5f;
+    private float timeFromShootToSpawn = 1.0f;
 
     private Valve.VR.EVRButtonId triggerButton = Valve.VR.EVRButtonId.k_EButton_SteamVR_Trigger;
     private Valve.VR.EVRButtonId gripButton = Valve.VR.EVRButtonId.k_EButton_Grip;
@@ -59,7 +59,7 @@ public class ControllerBallsScript : MonoBehaviour {
                 isPointing = false;
             }
 
-        if (ballToSpawn && (Time.time - lastShotTime) > timeFromShootToSpawn)
+        if (GameManagerScript.playing &&  ballToSpawn && (Time.time - lastShotTime) > timeFromShootToSpawn)
         {
             CreateNewBall();
             ballToSpawn = false;
@@ -79,7 +79,7 @@ public class ControllerBallsScript : MonoBehaviour {
     private void CreateNewBall()
     {
         myBall = Instantiate(ballPrefab, startPosition.position, new Quaternion());
-        myBall.GetComponent<BallScript>().SetBallObject(ApplicationData.RandomNewColor()/*Color.black*/);
+        myBall.GetComponent<BallScript>().SetBallObject(ApplicationData.RandomNewColorForPlayer()/*Color.black*/);
         myBall.transform.parent = startPosition;
     }
 
@@ -89,7 +89,7 @@ public class ControllerBallsScript : MonoBehaviour {
         {
             myBall.transform.parent = null;
             Vector3 force = destination - startPosition.position;
-            myBall.AddComponent<BallFlyingScript>();
+            myBall.AddComponent<BallFlyingScript>().myOldParent = startPosition.gameObject;
             Rigidbody rigid = myBall.AddComponent<Rigidbody>();
             rigid.useGravity = false;
             rigid.isKinematic = false;
