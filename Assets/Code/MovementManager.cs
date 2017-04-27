@@ -6,13 +6,13 @@ public static class MovementManager {
 
     private static bool playing;
 
-    public static float safeDistance = 0.041f;
+    public static float safeDistance = 0.01f;
 
     public static bool specialMove;
 
     private static bool changeSpecialMoveToFalse;
 
-    public static bool MoveBalls(BList balls)
+    public static bool MoveBalls(BList balls, float safeDistance)
     {
         changeSpecialMoveToFalse = specialMove;
         playing = true;
@@ -31,12 +31,12 @@ public static class MovementManager {
         {
             changeSpecialMoveToFalse = false;
             specialMove = false;
-           
+            CheckBallsCorrectDistances(balls, safeDistance);
         }
         return playing;
     }
 
-    public static void CheckBallsCorrectDistances(BList balls)
+    public static void CheckBallsCorrectDistances(BList balls, float safeDistance)
     {
         BListObject actualBall = balls.InitEnumerationFromLeftBListObject();
         if (actualBall != null)
@@ -44,18 +44,21 @@ public static class MovementManager {
             do {
                 if (actualBall.leftNeighbour != null)
                 {
-                    if (Vector3.Distance(actualBall.value.transform.position, actualBall.leftNeighbour.value.transform.position) < safeDistance)
+                    CalculateLerpVector(actualBall.value.GetComponent<BallScript>().ballObj);
+                    int prevSpeedLevel = actualBall.value.GetComponent<BallScript>().ballObj.actualSpeedLevel;
+                    actualBall.value.GetComponent<BallScript>().ballObj.actualSpeedLevel = 2;
+                    while (Vector3.Distance(actualBall.value.transform.position, actualBall.leftNeighbour.value.transform.position) < safeDistance)
                     {
-                        actualBall.value.transform.position -= actualBall.value.GetComponent<BallScript>().ballObj.lerpVector;
+                        MoveBall(actualBall);
                     }
+                    actualBall.value.GetComponent<BallScript>().ballObj.actualSpeedLevel = prevSpeedLevel;
                 }
-
             } while ((actualBall = balls.NextBListObject())!= null);
         }
         
     }
 
-    private static void MoveBall(BListObject ballListObj)
+    public static void MoveBall(BListObject ballListObj)
     {
         GameObject ball = ballListObj.value;
         BallObject ballObj = ball.GetComponent<BallScript>().ballObj;

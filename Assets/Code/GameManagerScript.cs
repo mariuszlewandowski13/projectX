@@ -6,6 +6,7 @@ public class GameManagerScript : MonoBehaviour {
 
     #region Public Properties
     public GameObject ballPrefab;
+    public GameObject board;
     #endregion
 
     #region Private Properties
@@ -38,6 +39,7 @@ public class GameManagerScript : MonoBehaviour {
     {
         Init();
         playing = true;
+        LoadLevel();
     }
 
 
@@ -49,7 +51,7 @@ public class GameManagerScript : MonoBehaviour {
         ballsThatCouldBeInSequence = new List<BListObject>();
         ballsThatHasToReturnWithSequence = new List<BListObject>();
         ballsCount = 0;
-        maxBallsCount = 20;
+        maxBallsCount = 150;
     }
 
     private void LateUpdate()
@@ -124,7 +126,7 @@ public class GameManagerScript : MonoBehaviour {
     {
         if (playing)
         {    
-            playing = MovementManager.MoveBalls(balls);
+            playing = MovementManager.MoveBalls(balls, spawningSafeDistance);
             if (CheckSpawningSafe())
             {
                 CreateNewBall();
@@ -352,14 +354,24 @@ public class GameManagerScript : MonoBehaviour {
     {
         BListObject listObj = balls.Find(ball);
         listObj.mustBeCenterPoint = true;
-            while (listObj != null)
-            {
+        while (listObj != null)
+        {
             listObj.value.GetComponent<BallScript>().ballObj.forwardBackward = -listObj.value.GetComponent<BallScript>().ballObj.forwardBackward;
             listObj.value.GetComponent<BallScript>().ballObj.destination ++;
+            
+            MovementManager.CalculateLerpVector(listObj.value.GetComponent<BallScript>().ballObj);
+            if (listObj.leftNeighbour != null)
+            {
+                listObj.value.GetComponent<BallScript>().ballObj.actualSpeedLevel ++;
+                while (Vector3.Distance(listObj.value.transform.position, listObj.leftNeighbour.value.transform.position) < spawningSafeDistance)
+                {
+                    MovementManager.MoveBall(listObj);
+                }
+                listObj.value.GetComponent<BallScript>().ballObj.actualSpeedLevel--;
+            }
             listObj.value.GetComponent<BallScript>().ballObj.DecreaseSpeedLevel();
             listObj = listObj.rightNeighbour;
-
-            }
+        }
         ballsThatCouldBeInSequence.Add(balls.Find(ball));
     }
 
@@ -385,4 +397,19 @@ public class GameManagerScript : MonoBehaviour {
         }
         return colors;
     }
+
+    private void LoadLevel()
+    {
+        LoadllevelGraphics();
+    }
+
+    private void LoadllevelGraphics()
+    {
+        Vector3[] levelPoints = LevelsPoints.GetLevelPoints();
+        board.GetComponent<LineRenderer>().positionCount = levelPoints.Length;
+        board.GetComponent<LineRenderer>().SetPositions(levelPoints);
+
+    }
+
+
 }

@@ -4,15 +4,16 @@ using System;
 [Serializable]
 public class BallObject {
 
-    private static int[] allowedSpeedLevels = new int[] {5, 25};
+    private static int[] allowedSpeedLevels = new int[] {12, 100, 1};
 
-    private int actualSpeedLevel = 0;
+    public int actualSpeedLevel = 0;
 
     public int forCounter
     {
         get {
             return allowedSpeedLevels[actualSpeedLevel];
         }
+
     }
 
     public Color color;
@@ -58,7 +59,7 @@ public class BallObject {
 
     public float forwardBackward;
 
-    public float speed = 0.001f;
+    public float speed = 0.0005f;
 
     public bool specialMove;
 
@@ -72,7 +73,7 @@ public class BallObject {
 
     public void IncreaseSpeedLevel(bool specialMo = true)
     {
-        if (actualSpeedLevel + 1 < allowedSpeedLevels.Length)
+        if (actualSpeedLevel + 1 < allowedSpeedLevels.Length - 1)
         {
             actualSpeedLevel++;
         }
