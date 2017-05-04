@@ -31,12 +31,12 @@ public static class MovementManager {
         {
             changeSpecialMoveToFalse = false;
             specialMove = false;
-            CheckBallsCorrectDistances(balls, safeDistance);
+            CheckBallsCorrectDistances(balls, 0.4f);
         }
         return playing;
     }
 
-    public static void CheckBallsCorrectDistances(BList balls, float safeDistance)
+    public static void CheckBallsCorrectDistances(BList balls, float safeDistance )
     {
         BListObject actualBall = balls.InitEnumerationFromLeftBListObject();
         if (actualBall != null)
@@ -47,6 +47,7 @@ public static class MovementManager {
                     CalculateLerpVector(actualBall.value.GetComponent<BallScript>().ballObj);
                     int prevSpeedLevel = actualBall.value.GetComponent<BallScript>().ballObj.actualSpeedLevel;
                     actualBall.value.GetComponent<BallScript>().ballObj.actualSpeedLevel = 2;
+
                     while (Vector3.Distance(actualBall.value.transform.position, actualBall.leftNeighbour.value.transform.position) < safeDistance)
                     {
                         MoveBall(actualBall);
@@ -62,16 +63,15 @@ public static class MovementManager {
     {
         GameObject ball = ballListObj.value;
         BallObject ballObj = ball.GetComponent<BallScript>().ballObj;
-        if (ballObj.lerpVector == new Vector3())
-        {
-            CalculateLerpVector(ballObj);
-        }
+        CalculateLerpVector(ballObj);
 
         int movementSpeed = ballObj.forCounter;
 
         for (int i = 0; i < movementSpeed; ++i)
         {
-            ball.transform.position += ballObj.lerpVector;
+            CalculateLerpVector(ballObj);
+            //ball.transform.position += ballObj.lerpVector;
+            AddLerpVector(ball, ballObj);
             if (Vector3.Distance(ball.transform.position, ballObj.destinationPosition) <= safeDistance)
             {
                 ChangeToNextDestination(ballObj);
@@ -85,14 +85,52 @@ public static class MovementManager {
         }
     }
 
+    private static void AddLerpVector(GameObject ball, BallObject ballObj)
+    {
+        Vector3 ballPos = ball.transform.position;
+        bool change = false;
+        if (Mathf.Abs(ball.transform.position.x - ballObj.destinationPosition.x) > Mathf.Abs(ballObj.lerpVector.x))
+        {
+            ballPos.x += ballObj.lerpVector.x;
+            change = true;
+        }
+
+        if (Mathf.Abs(ball.transform.position.y - ballObj.destinationPosition.y) > Mathf.Abs(ballObj.lerpVector.y))
+        {
+            ballPos.y += ballObj.lerpVector.y;
+            change = true;
+        }
+
+        if (Mathf.Abs(ball.transform.position.z - ballObj.destinationPosition.z) > Mathf.Abs(ballObj.lerpVector.z))
+        {
+            ballPos.z += ballObj.lerpVector.z;
+            change = true;
+        }
+
+        if (change == true)
+        {
+            ball.transform.position = ballPos;
+        }
+        else {
+            ball.transform.position = ballObj.destinationPosition;
+        }
+        
+
+
+    }
+
     public static void CalculateLerpVector(BallObject ballObj)
     {
-        ballObj.lerpVector = (Vector3.Lerp(ballObj.sourcePosition, ballObj.destinationPosition, ballObj.speed) - ballObj.sourcePosition) / Vector3.Distance(ballObj.sourcePosition, ballObj.destinationPosition); 
+        if (ballObj.lerpVector == new Vector3())
+        {
+            ballObj.lerpVector = (Vector3.Lerp(ballObj.sourcePosition, ballObj.destinationPosition, ballObj.speed) - ballObj.sourcePosition) / Vector3.Distance(ballObj.sourcePosition, ballObj.destinationPosition);
+        }
+        
     }
 
     public static void ChangeToNextDestination(BallObject ballObj, bool decrease = true)
     {
-        if ((ballObj.destination = LevelsPoints.GetNextLevelPoint(ballObj.destination, ballObj.forwardBackward)) < 0)
+        if ((ballObj.destination = LevelManager.GetNextLevelPoint(ballObj.destination, ballObj.forwardBackward)) < 0)
         {
             playing = false;
         }

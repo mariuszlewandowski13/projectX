@@ -18,6 +18,9 @@ public class GameManagerScript : MonoBehaviour {
     private Vector3 levelSpawningPosition;
 
     public static bool playing;
+    public bool levelEnded;
+    public bool lost;
+    public bool levelToStart;
 
     private List<BListObject> ballsThatCouldBeInSequence;
     private List<BListObject> ballsThatHasToReturnWithSequence;
@@ -37,21 +40,23 @@ public class GameManagerScript : MonoBehaviour {
 
     private void Start()
     {
-        Init();
-        playing = true;
+        Clear();
+        playing = false;
         LoadLevel();
+        AnimationsManager.PlayLevelStartAnimation(LevelManager.actualLevel);
+        levelToStart = true;
     }
 
 
-    private void Init()
+    private void Clear()
     {
         spawningSafeDistance = ballPrefab.transform.lossyScale.y;
         balls = new BList();
-        levelSpawningPosition = LevelsPoints.GetLevelStartPoint();
         ballsThatCouldBeInSequence = new List<BListObject>();
         ballsThatHasToReturnWithSequence = new List<BListObject>();
         ballsCount = 0;
-        maxBallsCount = 150;
+        lost = false;
+        levelEnded = false;
     }
 
     private void LateUpdate()
@@ -59,6 +64,37 @@ public class GameManagerScript : MonoBehaviour {
         CheckWinningConditions();
         CheckAndCreateNewBall();
         CheckAndRemoveBallsInSequence();
+        CheckAndLoadNewLevel();
+        CheckAndPlay();
+    }
+
+    private void CheckAndPlay()
+    {
+        if (!playing && !levelEnded && levelToStart && !AnimationsManager.levelStartAnimation)
+        {
+            levelToStart = false;
+            playing = true;
+        }
+    }
+
+
+
+    private void CheckAndLoadNewLevel()
+    {
+        if (levelEnded && !AnimationsManager.levelEndedAnimation)
+        {
+            Clear();
+            if (LevelManager.NextLevel())
+            {
+                //LoadLevel();
+               // AnimationsManager.PlayLevelStartAnimation(LevelManager.actualLevel);
+                //levelToStart = true;
+                GameObject.Find("Menu").transform.FindChild("NextLevel").gameObject.SetActive(true);
+            }
+            else {
+                AnimationsManager.PlayGameWonAnimation();
+            }
+        }
     }
 
     private void CheckWinningConditions()
@@ -69,8 +105,17 @@ public class GameManagerScript : MonoBehaviour {
             {
                 Debug.Log("Won!!!");
                 playing = false;
+                levelEnded = true;
+                AnimationsManager.PlayLevelEndedAnimation(LevelManager.actualLevel);
             }
         }
+        if (lost)
+        {
+            Debug.Log("Lost!!!");
+            AnimationsManager.PlayGameLostAnimation();
+            lost = false;
+        }
+        
     }
 
     private void CheckAndRemoveBallsInSequence()
@@ -127,6 +172,7 @@ public class GameManagerScript : MonoBehaviour {
         if (playing)
         {    
             playing = MovementManager.MoveBalls(balls, spawningSafeDistance);
+            lost = !playing;
             if (CheckSpawningSafe())
             {
                 CreateNewBall();
@@ -180,10 +226,7 @@ public class GameManagerScript : MonoBehaviour {
         Vector3 newPos = first.transform.position;
         do
         {
-            if (ballObj.lerpVector == new Vector3())
-            {
-                MovementManager.CalculateLerpVector(ballObj);
-            }
+            MovementManager.CalculateLerpVector(ballObj);
             newPos += ballObj.lerpVector;
 
             if (Vector3.Distance(newPos, ballObj.destinationPosition) < MovementManager.safeDistance)
@@ -357,12 +400,12 @@ public class GameManagerScript : MonoBehaviour {
         while (listObj != null)
         {
             listObj.value.GetComponent<BallScript>().ballObj.forwardBackward = -listObj.value.GetComponent<BallScript>().ballObj.forwardBackward;
-            listObj.value.GetComponent<BallScript>().ballObj.destination ++;
-            
+            listObj.value.GetComponent<BallScript>().ballObj.destination++;
+
             MovementManager.CalculateLerpVector(listObj.value.GetComponent<BallScript>().ballObj);
             if (listObj.leftNeighbour != null)
             {
-                listObj.value.GetComponent<BallScript>().ballObj.actualSpeedLevel ++;
+                listObj.value.GetComponent<BallScript>().ballObj.actualSpeedLevel++;
                 while (Vector3.Distance(listObj.value.transform.position, listObj.leftNeighbour.value.transform.position) < spawningSafeDistance)
                 {
                     MovementManager.MoveBall(listObj);
@@ -400,15 +443,17 @@ public class GameManagerScript : MonoBehaviour {
 
     private void LoadLevel()
     {
+        levelSpawningPosition = LevelManager.GetLevelStartPoint();
+        maxBallsCount = LevelManager.GetLevelMaxBallsCount() ;
         LoadllevelGraphics();
+        
     }
 
     private void LoadllevelGraphics()
     {
-        Vector3[] levelPoints = LevelsPoints.GetLevelPoints();
+        Vector3[] levelPoints = LevelManager.GetLevelPoints();
         board.GetComponent<LineRenderer>().positionCount = levelPoints.Length;
         board.GetComponent<LineRenderer>().SetPositions(levelPoints);
-
     }
 
 

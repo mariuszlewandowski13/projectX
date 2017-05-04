@@ -4,7 +4,7 @@ using System;
 [Serializable]
 public class BallObject {
 
-    private static int[] allowedSpeedLevels = new int[] {12, 100, 1};
+    private static int[] allowedSpeedLevels = new int[] {6, 100, 1};
 
     public int actualSpeedLevel = 0;
 
@@ -28,7 +28,7 @@ public class BallObject {
          set {
             _destination = value;
             sourcePosition = myObject.transform.position;
-            destinationPosition = LevelsPoints.GetPointByIndex(value);
+            destinationPosition = LevelManager.GetPointByIndex(value);
         }
         get {
             return _destination;
