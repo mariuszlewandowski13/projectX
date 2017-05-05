@@ -4,7 +4,7 @@ using System;
 [Serializable]
 public class BallObject {
 
-    private static int[] allowedSpeedLevels = new int[] {6, 100, 1};
+    private static int[] allowedSpeedLevels = new int[] {9, 100, 1};
 
     public int actualSpeedLevel = 0;
 
@@ -13,9 +13,7 @@ public class BallObject {
         get {
             return allowedSpeedLevels[actualSpeedLevel];
         }
-
     }
-
     public Color color;
 
     private GameObject myObject;

@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections.Generic;
 
 public class ControllerBallsScript : MonoBehaviour {
 
@@ -17,7 +18,7 @@ public class ControllerBallsScript : MonoBehaviour {
     private float timeFromShootToSpawn = 1.0f;
 
     private Valve.VR.EVRButtonId triggerButton = Valve.VR.EVRButtonId.k_EButton_SteamVR_Trigger;
-    private Valve.VR.EVRButtonId gripButton = Valve.VR.EVRButtonId.k_EButton_Grip;
+    private Valve.VR.EVRButtonId touchpadButton = Valve.VR.EVRButtonId.k_EButton_SteamVR_Touchpad;
 
     private SteamVR_Controller.Device controller { get { return SteamVR_Controller.Input((int)trackedObj.index); } }
     private SteamVR_TrackedObject trackedObj;
@@ -27,17 +28,27 @@ public class ControllerBallsScript : MonoBehaviour {
     private bool isPointing;
 
     private Vector3 hitPoint;
+    private Color actualColor;
+    private Color nextBallColor;
 
     void Start()
     {
+        Clear();
         trackedObj = GetComponent<SteamVR_TrackedObject>();
         CreateNewBall();
+        GameManagerScript.deleteSequence += CheckAvailableColorsAndRecalculate;
+    }
+
+    private void Clear()
+    {
+        nextBallColor = new Color();
+        actualColor = new Color();
     }
 
     void Update()
     {
         bool isTriggerDown = controller.GetPressDown(triggerButton);
-        bool isGripDown = controller.GetPressDown(gripButton);
+        bool isTouchpadDown = controller.GetPressDown(touchpadButton);
         RaycastHit hit;
             Ray ray = new Ray(startPosition.position, startPosition.forward);
             Physics.Raycast(ray, out hit);
@@ -48,7 +59,7 @@ public class ControllerBallsScript : MonoBehaviour {
                 hitPoint = hit.point;
                 CursorOn();
 
-                if (isTriggerDown && ShootTheBall(hit.point))
+                if (GameManagerScript.playing && isTriggerDown && ShootTheBall(hit.point))
                     {
                         SetTimeForSpawningNewBall();
                     }
@@ -65,9 +76,9 @@ public class ControllerBallsScript : MonoBehaviour {
             ballToSpawn = false;
         }
 
-        if (isGripDown)
+        if (GameManagerScript.playing && isTouchpadDown)
         {
-            PlayStopGame();
+            TurnColors();
         }
     }
 
@@ -78,8 +89,29 @@ public class ControllerBallsScript : MonoBehaviour {
 
     private void CreateNewBall()
     {
+        RecalculateColors();
+        ShowNexBallColor();
+        SpawnNewBall();
+    }
+
+    private void ShowNexBallColor()
+    {
+
+        if (transform.FindChild("Model").FindChild("trackpad") != null)
+        {
+            if (transform.FindChild("Model").FindChild("trackpad").GetComponent<Renderer>().material.mainTexture != null)
+            {
+                transform.FindChild("Model").FindChild("trackpad").GetComponent<Renderer>().material.mainTexture = null;
+            }
+            transform.FindChild("Model").FindChild("trackpad").GetComponent<Renderer>().material.SetColor("_Color", nextBallColor);
+        }
+        
+    }
+
+    private void SpawnNewBall()
+    {
         myBall = Instantiate(ballPrefab, startPosition.position, new Quaternion());
-        myBall.GetComponent<BallScript>().SetBallObject(ApplicationData.RandomNewColorForPlayer()/*Color.black*/);
+        UpdateBallColor();
         myBall.transform.parent = startPosition;
     }
 
@@ -123,6 +155,61 @@ public class ControllerBallsScript : MonoBehaviour {
             GetComponent<LineRenderer>().positionCount = 0;
         }
 
+    }
+
+    private void RecalculateColors()
+    {
+        if (nextBallColor == new Color())
+        {
+            actualColor = ApplicationData.RandomNewColorForPlayer();
+        }
+        else {
+            actualColor = nextBallColor;
+        }
+        nextBallColor = ApplicationData.RandomNewColorForPlayer();
+    }
+
+    private void CheckAvailableColorsAndRecalculate(List<Color> availableColors)
+    {
+        if (!availableColors.Contains(actualColor))
+        {
+            actualColor = ApplicationData.RandomNewColorForPlayer(availableColors);
+            if (myBall != null)
+            {
+                UpdateBallColor();
+            }
+        }
+
+        if (!availableColors.Contains(nextBallColor))
+        {
+            nextBallColor = ApplicationData.RandomNewColorForPlayer(availableColors);
+            ShowNexBallColor();
+        }
+    }
+
+    private void TurnColors()
+    {
+        if (myBall != null)
+        {
+            Color temp = actualColor;
+            actualColor = nextBallColor;
+            nextBallColor = temp;
+
+            UpdateBallColor();
+            ShowNexBallColor();
+        }
+    }
+    private void UpdateBallColor()
+    {
+        if (myBall != null)
+        {
+            myBall.GetComponent<BallScript>().SetBallObject(actualColor);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        GameManagerScript.deleteSequence -= CheckAvailableColorsAndRecalculate;
     }
 
 }

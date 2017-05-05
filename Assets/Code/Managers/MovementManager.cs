@@ -31,7 +31,7 @@ public static class MovementManager {
         {
             changeSpecialMoveToFalse = false;
             specialMove = false;
-            CheckBallsCorrectDistances(balls, 0.4f);
+            CheckBallsCorrectDistances(balls, GameManagerScript.spawningSafeDistance);
         }
         return playing;
     }
@@ -48,7 +48,7 @@ public static class MovementManager {
                     int prevSpeedLevel = actualBall.value.GetComponent<BallScript>().ballObj.actualSpeedLevel;
                     actualBall.value.GetComponent<BallScript>().ballObj.actualSpeedLevel = 2;
 
-                    while (Vector3.Distance(actualBall.value.transform.position, actualBall.leftNeighbour.value.transform.position) < safeDistance)
+                    while (Vector3.Distance(actualBall.value.transform.position, actualBall.leftNeighbour.value.transform.position) <= safeDistance)
                     {
                         MoveBall(actualBall);
                     }
@@ -67,18 +67,17 @@ public static class MovementManager {
 
         int movementSpeed = ballObj.forCounter;
 
+        bool special = ballObj.specialMove;
         for (int i = 0; i < movementSpeed; ++i)
         {
             CalculateLerpVector(ballObj);
-            //ball.transform.position += ballObj.lerpVector;
             AddLerpVector(ball, ballObj);
             if (Vector3.Distance(ball.transform.position, ballObj.destinationPosition) <= safeDistance)
             {
                 ChangeToNextDestination(ballObj);
+                if (special) break;
             }
         }
-       
-
         if (ballObj.specialMove == true)
         {
             changeSpecialMoveToFalse = false;
@@ -140,4 +139,58 @@ public static class MovementManager {
         }
         
     }
+
+    public static bool CheckIfIsRightAndFindNewPositions(GameObject newBall, BListObject collidingBall, out Vector3 posForNewBall, out Vector3 posForFirstBall, GameObject first)
+    {
+        posForFirstBall = FindNewPositionForFirstBallOnBallAdding(first);
+        return GetPosForNewBall(collidingBall, newBall, out posForNewBall, posForFirstBall);
+    }
+
+    public static Vector3 FindNewPositionForFirstBallOnBallAdding(GameObject first)
+    {
+        BallObject ballObj = first.GetComponent<BallScript>().ballObj;
+        int dest = 0;
+        Vector3 newPos = first.transform.position;
+        float distance = 0.0f;
+        do
+        {
+            CalculateLerpVector(ballObj);
+            newPos += ballObj.lerpVector;
+            distance += ballObj.lerpVector.magnitude;
+
+            if (Vector3.Distance(newPos, ballObj.destinationPosition) < safeDistance)
+            {
+                ChangeToNextDestination(ballObj, false);
+                dest++;
+            }
+
+        } while (distance < GameManagerScript.spawningSafeDistance);
+
+        if (dest > 0)
+        {
+            ballObj.destination -= dest;
+        }
+
+        return newPos;
+    }
+    public static bool GetPosForNewBall(BListObject collidingObject, GameObject newBall, out Vector3 posForNewBall, Vector3 posForFirstBall)
+    {
+        bool isRight = false;
+        float distToLeft = (collidingObject.leftNeighbour != null ? Vector3.Distance(collidingObject.leftNeighbour.value.transform.position, newBall.transform.position) : Vector3.Distance(GameManagerScript.levelSpawningPosition, newBall.transform.position));
+        float distToRight = (collidingObject.rightNeighbour != null ? Vector3.Distance(collidingObject.rightNeighbour.value.transform.position, newBall.transform.position) : Vector3.Distance(posForFirstBall, newBall.transform.position));
+
+        if (distToLeft < distToRight)
+        {
+            isRight = true;
+            posForNewBall = collidingObject.value.transform.position;
+        }
+        else {
+            posForNewBall = (collidingObject.rightNeighbour != null ? collidingObject.rightNeighbour.value.transform.position : posForFirstBall);
+        }
+
+        newBall.GetComponent<BallScript>().ballObj.destination = collidingObject.value.GetComponent<BallScript>().ballObj.destination;
+
+        return isRight;
+    }
+
 }

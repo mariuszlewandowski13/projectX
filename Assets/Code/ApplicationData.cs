@@ -29,14 +29,13 @@ public static class ApplicationData {
         return actualColor;
     }
 
-    public static Color RandomNewColorForPlayer()
+    public static Color RandomNewColorForPlayer(List<Color> colors = null)
     {
-        if (GameManagerScript.canInstantiate)
+        if (colors == null)
         {
-            return RandomNewColorForBoard();
+            colors = GameObject.Find("GameManager").GetComponent<GameManagerScript>().GetAllColorsOnBoard();
         }
-        else {
-            List<Color> colors = GameObject.Find("GameManager").GetComponent<GameManagerScript>().GetAllColorsOnBoard();
+            
             if (colors.Count > 0)
             {
                 return colors[ran.Next(0, colors.Count)];
@@ -44,8 +43,6 @@ public static class ApplicationData {
             else {
                 return RandomNewColorForBoard();
             }
-            
-        }
     }
 
     private static void UpdateCounter()

@@ -4,6 +4,11 @@ using UnityEngine;
 
 public class GameManagerScript : MonoBehaviour {
 
+    #region Public Events
+    public delegate void ColorsChange(List<Color> colors);
+    public static event ColorsChange deleteSequence;
+    #endregion
+
     #region Public Properties
     public GameObject ballPrefab;
     public GameObject board;
@@ -11,11 +16,13 @@ public class GameManagerScript : MonoBehaviour {
 
     #region Private Properties
 
-    private float spawningSafeDistance;
+
+
+    public static float spawningSafeDistance;
 
     private BList balls;
 
-    private Vector3 levelSpawningPosition;
+    public static Vector3 levelSpawningPosition;
 
     public static bool playing;
     public bool levelEnded;
@@ -59,7 +66,7 @@ public class GameManagerScript : MonoBehaviour {
         levelEnded = false;
     }
 
-    private void LateUpdate()
+    private void Update()
     {
         CheckWinningConditions();
         CheckAndCreateNewBall();
@@ -87,7 +94,7 @@ public class GameManagerScript : MonoBehaviour {
             if (LevelManager.NextLevel())
             {
                 //LoadLevel();
-               // AnimationsManager.PlayLevelStartAnimation(LevelManager.actualLevel);
+                //AnimationsManager.PlayLevelStartAnimation(LevelManager.actualLevel);
                 //levelToStart = true;
                 GameObject.Find("Menu").transform.FindChild("NextLevel").gameObject.SetActive(true);
             }
@@ -136,6 +143,7 @@ public class GameManagerScript : MonoBehaviour {
             {
                 ballsThatCouldBeInSequence.Remove(ball);
             }
+            
 
             ReturnBallsAfterRemovingBallsInSequence();
         }
@@ -204,67 +212,12 @@ public class GameManagerScript : MonoBehaviour {
     {
         Vector3 positionForNewBall;
         Vector3 positionForFirstBall;
-        bool isRight = CheckIfIsRightAndFindNewPositions(newBall, collidingBall, out positionForNewBall, out positionForFirstBall);
+        bool isRight = MovementManager.CheckIfIsRightAndFindNewPositions(newBall, balls.Find(collidingBall), out positionForNewBall, out positionForFirstBall, balls.First);
         ballsThatCouldBeInSequence.Add( balls.Insert(newBall, collidingBall, isRight));
         ChangeBallsDirectionOnInsert(newBall, positionForFirstBall, positionForNewBall);
         MovementManager.specialMove = true;
         newBall.tag = "Ball";
     }
-
-    public bool CheckIfIsRightAndFindNewPositions(GameObject newBall, GameObject collidingBall,  out Vector3 posForNewBall, out Vector3 posForFirstBall)
-    {
-        posForFirstBall = FindNewPositionForFirestBallOnBallAdding();
-        BListObject collidingBLisObj = balls.Find(collidingBall);
-        return GetPosForNewBall(collidingBLisObj, newBall, out posForNewBall, posForFirstBall);
-    }
-
-    public Vector3 FindNewPositionForFirestBallOnBallAdding()
-    {
-        GameObject first = balls.First;
-        BallObject ballObj = first.GetComponent<BallScript>().ballObj;
-        int dest = 0;
-        Vector3 newPos = first.transform.position;
-        do
-        {
-            MovementManager.CalculateLerpVector(ballObj);
-            newPos += ballObj.lerpVector;
-
-            if (Vector3.Distance(newPos, ballObj.destinationPosition) < MovementManager.safeDistance)
-            {
-                MovementManager.ChangeToNextDestination(ballObj, false);
-                dest++;
-            }
-
-        } while (Vector3.Distance(first.transform.position, newPos) < spawningSafeDistance);
-
-        if (dest > 0)
-        {
-            ballObj.destination -= dest;
-        }
-
-        return newPos;
-    }
-
-    public bool GetPosForNewBall(BListObject collidingObject, GameObject newBall, out Vector3 posForNewBall, Vector3 posForFirstBall)
-    {
-        bool isRight = false;
-        float distToLeft = (collidingObject.leftNeighbour != null ? Vector3.Distance(collidingObject.leftNeighbour.value.transform.position, newBall.transform.position) : Vector3.Distance(levelSpawningPosition, newBall.transform.position));
-        float distToRight = (collidingObject.rightNeighbour!= null ? Vector3.Distance(collidingObject.rightNeighbour.value.transform.position, newBall.transform.position) : Vector3.Distance(posForFirstBall, newBall.transform.position)) ;
-
-        if (distToLeft < distToRight)
-        {
-            isRight = true;
-            posForNewBall = collidingObject.value.transform.position;
-        }
-        else {
-            posForNewBall = (collidingObject.rightNeighbour != null ? collidingObject.rightNeighbour.value.transform.position : posForFirstBall);
-        }
-
-        newBall.GetComponent<BallScript>().ballObj.destination = collidingObject.value.GetComponent<BallScript>().ballObj.destination;
-
-        return isRight;
-    }
-
     private void ChangeBallsDirectionOnInsert(GameObject newBall, Vector3 positionForFirstBall, Vector3 posForNewBall)
     {
         BListObject actual = balls.InitEnumerationFromRightBListObject();
@@ -307,6 +260,10 @@ public class GameManagerScript : MonoBehaviour {
         if (CheckBallsToRemove(ballInSequence))
         {
             RemoveBallsInSequence(ballInSequence.value);
+            if (deleteSequence != null)
+            {
+                deleteSequence(GetAllColorsOnBoard());
+            }
         }
     }
 
