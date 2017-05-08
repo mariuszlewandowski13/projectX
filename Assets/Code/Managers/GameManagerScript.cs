@@ -2,25 +2,52 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public struct NewBallToAdd
+{
+    public GameObject newBall;
+    public GameObject collidingBall;
+
+    public NewBallToAdd(GameObject newBall, GameObject collidingBall)
+    {
+        this.newBall = newBall;
+        this.collidingBall = collidingBall;
+    }
+}
+
+
 public class GameManagerScript : MonoBehaviour {
 
     #region Public Events
     public delegate void ColorsChange(List<Color> colors);
     public static event ColorsChange deleteSequence;
+
+    public delegate void BallsEvents(GameObject ball);
+    public static event BallsEvents ballCreated;
     #endregion
 
     #region Public Properties
     public GameObject ballPrefab;
     public GameObject board;
+    public static bool canShoot
+    {
+        get
+        {
+            return _canShoot && playing;
+        }
+    }
     #endregion
 
     #region Private Properties
 
-
+    private static bool _canShoot;
+    private static int spawningBallSpeedLevelOnStart = 3;
+    private static int spawningBallSpeedLevelNormal = 0;
+    private static int onStartBallsMaxCount;
 
     public static float spawningSafeDistance;
 
     private BList balls;
+    private List<NewBallToAdd> ballsToAdd;
 
     public static Vector3 levelSpawningPosition;
 
@@ -41,6 +68,8 @@ public class GameManagerScript : MonoBehaviour {
             return ballsCount < maxBallsCount;
         }
     }
+
+    private object canAddBallLock = new object();
 
     #endregion
 
@@ -64,6 +93,8 @@ public class GameManagerScript : MonoBehaviour {
         ballsCount = 0;
         lost = false;
         levelEnded = false;
+        _canShoot = false;
+        ballsToAdd = new List<NewBallToAdd>();
     }
 
     private void Update()
@@ -73,6 +104,19 @@ public class GameManagerScript : MonoBehaviour {
         CheckAndRemoveBallsInSequence();
         CheckAndLoadNewLevel();
         CheckAndPlay();
+        CheckAndAddNextBall();
+    }
+
+    private void CheckAndAddNextBall()
+    {
+        if (ballsToAdd.Count > 0)
+        {
+            NewBallToAdd ballToAddStruct = ballsToAdd[0];
+            if (AddNewBallFromPlayer(ballToAddStruct.newBall, ballToAddStruct.collidingBall, true))
+            {
+                ballsToAdd.Remove(ballToAddStruct);
+            }
+        }
     }
 
     private void CheckAndPlay()
@@ -93,10 +137,10 @@ public class GameManagerScript : MonoBehaviour {
             Clear();
             if (LevelManager.NextLevel())
             {
-                //LoadLevel();
-                //AnimationsManager.PlayLevelStartAnimation(LevelManager.actualLevel);
-                //levelToStart = true;
-                GameObject.Find("Menu").transform.FindChild("NextLevel").gameObject.SetActive(true);
+                LoadLevel();
+                AnimationsManager.PlayLevelStartAnimation(LevelManager.actualLevel);
+                levelToStart = true;
+                //GameObject.Find("Menu").transform.FindChild("NextLevel").gameObject.SetActive(true);
             }
             else {
                 AnimationsManager.PlayGameWonAnimation();
@@ -143,8 +187,6 @@ public class GameManagerScript : MonoBehaviour {
             {
                 ballsThatCouldBeInSequence.Remove(ball);
             }
-            
-
             ReturnBallsAfterRemovingBallsInSequence();
         }
     }
@@ -167,9 +209,9 @@ public class GameManagerScript : MonoBehaviour {
     {
         while (ball != null)
         {
-            ball.value.GetComponent<BallScript>().ballObj.forwardBackward = -ball.value.GetComponent<BallScript>().ballObj.forwardBackward;
-            ball.value.GetComponent<BallScript>().ballObj.destination--;
-            ball.value.GetComponent<BallScript>().ballObj.IncreaseSpeedLevel(false);
+                ball.value.GetComponent<BallScript>().ballObj.forwardBackward = -ball.value.GetComponent<BallScript>().ballObj.forwardBackward;
+                ball.value.GetComponent<BallScript>().ballObj.destination--;
+                ball.value.GetComponent<BallScript>().ballObj.IncreaseSpeedLevel(false);
             //Debug.Log(ball.value.name);
             ball = ball.rightNeighbour; 
         }
@@ -178,25 +220,51 @@ public class GameManagerScript : MonoBehaviour {
     private void CheckAndCreateNewBall()
     {
         if (playing)
-        {    
+        {
             playing = MovementManager.MoveBalls(balls, spawningSafeDistance);
             lost = !playing;
             if (CheckSpawningSafe())
             {
                 CreateNewBall();
+                CheckStartSpeedLevel();
             }
         }
+    }
 
+    private void CheckStartSpeedLevel()
+    {
+        if (balls.starting && balls.count >= onStartBallsMaxCount)
+        {
+            balls.starting = false;
+            ClearSpeedLevels(balls);
+            _canShoot = true;
+        }
+    }
+
+    private void ClearSpeedLevels(BList balls)
+    {
+        BListObject ball = balls.InitEnumerationFromLeftBListObject();
+        if (ball != null)
+        {
+            do
+            {
+                ball.value.GetComponent<BallScript>().ballObj.RestartSpeedLevel();
+            } while ((ball = balls.NextBListObject()) != null);
+        }
     }
 
     private void CreateNewBall()
     {
         GameObject newBall = Instantiate(ballPrefab, levelSpawningPosition, new Quaternion());
-        newBall.GetComponent<BallScript>().SetBallObject(ApplicationData.RandomNewColorForBoard());
+        newBall.GetComponent<BallScript>().SetBallObject(ApplicationData.RandomNewColorForBoard(), (balls.starting? spawningBallSpeedLevelOnStart:spawningBallSpeedLevelNormal));
         newBall.name = "Ball" + ApplicationData.GetBallIndex().ToString();
         newBall.tag = "Ball";
         balls.AppendLast(newBall);
         ballsCount++;
+        if (ballCreated != null)
+        {
+            ballCreated(newBall);
+        }
     }
 
     private bool CheckSpawningSafe()
@@ -208,15 +276,31 @@ public class GameManagerScript : MonoBehaviour {
         else return false;
     }
 
-    public void AddNewBallFromPlayer(GameObject newBall, GameObject collidingBall)
+    public bool AddNewBallFromPlayer(GameObject newBall, GameObject collidingBall, bool isOnList = false)
     {
-        Vector3 positionForNewBall;
-        Vector3 positionForFirstBall;
-        bool isRight = MovementManager.CheckIfIsRightAndFindNewPositions(newBall, balls.Find(collidingBall), out positionForNewBall, out positionForFirstBall, balls.First);
-        ballsThatCouldBeInSequence.Add( balls.Insert(newBall, collidingBall, isRight));
-        ChangeBallsDirectionOnInsert(newBall, positionForFirstBall, positionForNewBall);
-        MovementManager.specialMove = true;
-        newBall.tag = "Ball";
+        bool isAdded = false;
+        lock(canAddBallLock)
+        {
+            if (!MovementManager.specialMove)
+            {
+                Vector3 positionForNewBall;
+                Vector3 positionForFirstBall;
+                bool isRight = MovementManager.CheckIfIsRightAndFindNewPositions(newBall, balls.Find(collidingBall), out positionForNewBall, out positionForFirstBall, balls.First);
+                ballsThatCouldBeInSequence.Add(balls.Insert(newBall, collidingBall, isRight));
+                ChangeBallsDirectionOnInsert(newBall, positionForFirstBall, positionForNewBall);
+                MovementManager.specialMove = true;
+                newBall.tag = "Ball";
+                isAdded = true;
+            }
+            else {
+                if (!isOnList)
+                {
+                    ballsToAdd.Add(new NewBallToAdd(newBall, collidingBall));
+                }
+                
+            }
+        }
+        return isAdded;
     }
     private void ChangeBallsDirectionOnInsert(GameObject newBall, Vector3 positionForFirstBall, Vector3 posForNewBall)
     {
@@ -225,8 +309,7 @@ public class GameManagerScript : MonoBehaviour {
         BallObject ballObj = actual.value.GetComponent<BallScript>().ballObj;
 
         bool curveChange = false;
-        ballObj.destination--;
-        
+            ballObj.destination--;
         ballObj.destinationPosition = positionForFirstBall;
         ballObj.IncreaseSpeedLevel();
         if (actual.value != newBall)
@@ -401,7 +484,8 @@ public class GameManagerScript : MonoBehaviour {
     private void LoadLevel()
     {
         levelSpawningPosition = LevelManager.GetLevelStartPoint();
-        maxBallsCount = LevelManager.GetLevelMaxBallsCount() ;
+        maxBallsCount = LevelManager.GetLevelMaxBallsCount();
+        onStartBallsMaxCount = LevelManager.GetLevelStartBallsCount();
         LoadllevelGraphics();
         
     }

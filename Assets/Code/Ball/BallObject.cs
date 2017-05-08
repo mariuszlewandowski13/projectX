@@ -4,9 +4,9 @@ using System;
 [Serializable]
 public class BallObject {
 
-    private static int[] allowedSpeedLevels = new int[] {9, 100, 1};
+    private static int[] allowedSpeedLevels = new int[] {9, 100, 1, 80};
 
-    public int actualSpeedLevel = 0;
+    public int actualSpeedLevel;
 
     public int forCounter
     {
@@ -16,7 +16,7 @@ public class BallObject {
     }
     public Color color;
 
-    private GameObject myObject;
+    public GameObject myObject;
 
     public Vector3 sourcePosition;
 
@@ -61,17 +61,25 @@ public class BallObject {
 
     public bool specialMove;
 
-    public BallObject(Color newColor,  GameObject myObject)
+    public BallObject(Color newColor,  GameObject myObject, int speedLevel)
     {
         this.myObject = myObject;
         color = newColor;
         destination = 1;
         forwardBackward = 1.0f;
+        actualSpeedLevel = speedLevel;
+    }
+
+    public BallObject(BallObject ballObj)
+    {
+        destination = ballObj.destination;
+        forwardBackward = ballObj.forwardBackward;
+        destinationPosition = ballObj.destinationPosition;
     }
 
     public void IncreaseSpeedLevel(bool specialMo = true)
     {
-        if (actualSpeedLevel + 1 < allowedSpeedLevels.Length - 1)
+        if (actualSpeedLevel == 0)
         {
             actualSpeedLevel++;
         }
@@ -80,12 +88,17 @@ public class BallObject {
 
     public bool DecreaseSpeedLevel()
     {
-        if (actualSpeedLevel - 1 >= 0)
+        if (actualSpeedLevel != 3 && actualSpeedLevel - 1 >= 0)
         {
             actualSpeedLevel--;
             if (actualSpeedLevel == 0) specialMove = false;
         }
         return specialMove;
+    }
+
+    public void RestartSpeedLevel()
+    {
+        actualSpeedLevel = 0;
     }
 
     

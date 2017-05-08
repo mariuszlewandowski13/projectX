@@ -2,6 +2,7 @@
 
 public class BList  {
 
+    public bool starting;
     private BListObject first;
     private BListObject actual;
     private BListObject last;
@@ -36,6 +37,7 @@ public class BList  {
     public BList()
     {
         count = 0;
+        starting = true;
     }
 
     public GameObject Next()

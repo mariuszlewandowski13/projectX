@@ -15,7 +15,7 @@ public class ControllerBallsScript : MonoBehaviour {
 
     private float lastShotTime;
 
-    private float timeFromShootToSpawn = 1.0f;
+    private float timeFromShootToSpawn = 0.5f;
 
     private Valve.VR.EVRButtonId triggerButton = Valve.VR.EVRButtonId.k_EButton_SteamVR_Trigger;
     private Valve.VR.EVRButtonId touchpadButton = Valve.VR.EVRButtonId.k_EButton_SteamVR_Touchpad;
@@ -35,7 +35,7 @@ public class ControllerBallsScript : MonoBehaviour {
     {
         Clear();
         trackedObj = GetComponent<SteamVR_TrackedObject>();
-        CreateNewBall();
+        SetTimeForSpawningNewBall();
         GameManagerScript.deleteSequence += CheckAvailableColorsAndRecalculate;
     }
 
@@ -59,7 +59,7 @@ public class ControllerBallsScript : MonoBehaviour {
                 hitPoint = hit.point;
                 CursorOn();
 
-                if (GameManagerScript.playing && isTriggerDown && ShootTheBall(hit.point))
+                if (GameManagerScript.canShoot && isTriggerDown && ShootTheBall(hit.point))
                     {
                         SetTimeForSpawningNewBall();
                     }
@@ -70,7 +70,7 @@ public class ControllerBallsScript : MonoBehaviour {
                 isPointing = false;
             }
 
-        if (GameManagerScript.playing &&  ballToSpawn && (Time.time - lastShotTime) > timeFromShootToSpawn)
+        if (GameManagerScript.canShoot &&  ballToSpawn && (Time.time - lastShotTime) > timeFromShootToSpawn)
         {
             CreateNewBall();
             ballToSpawn = false;
@@ -90,11 +90,11 @@ public class ControllerBallsScript : MonoBehaviour {
     private void CreateNewBall()
     {
         RecalculateColors();
-        ShowNexBallColor();
+        ShowNextBallColor();
         SpawnNewBall();
     }
 
-    private void ShowNexBallColor()
+    private void ShowNextBallColor()
     {
 
         if (transform.FindChild("Model").FindChild("trackpad") != null)
@@ -183,7 +183,7 @@ public class ControllerBallsScript : MonoBehaviour {
         if (!availableColors.Contains(nextBallColor))
         {
             nextBallColor = ApplicationData.RandomNewColorForPlayer(availableColors);
-            ShowNexBallColor();
+            ShowNextBallColor();
         }
     }
 
@@ -196,7 +196,7 @@ public class ControllerBallsScript : MonoBehaviour {
             nextBallColor = temp;
 
             UpdateBallColor();
-            ShowNexBallColor();
+            ShowNextBallColor();
         }
     }
     private void UpdateBallColor()

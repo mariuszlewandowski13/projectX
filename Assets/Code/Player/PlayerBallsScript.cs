@@ -14,7 +14,7 @@ public class PlayerBallsScript : MonoBehaviour {
 
     private float lastShotTime;
 
-    private float timeFromShootToSpawn = 1.0f;
+    private float timeFromShootToSpawn = 0.0f;
 
      void Start()
     {

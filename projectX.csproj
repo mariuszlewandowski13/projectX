@@ -85,8 +85,10 @@
     <Compile Include="Assets\Code\Ball\BallScript.cs" />
     <Compile Include="Assets\Code\BidirectionalList\BList.cs" />
     <Compile Include="Assets\Code\BidirectionalList\BListObject.cs" />
+    <Compile Include="Assets\Code\Bonuses\BonusScript.cs" />
     <Compile Include="Assets\Code\Dev\PointScript.cs" />
     <Compile Include="Assets\Code\Managers\AnimationsManager.cs" />
+    <Compile Include="Assets\Code\Managers\BonusManager.cs" />
     <Compile Include="Assets\Code\Managers\GameManagerScript.cs" />
     <Compile Include="Assets\Code\Managers\LevelManager.cs" />
     <Compile Include="Assets\Code\Managers\MovementManager.cs" />
