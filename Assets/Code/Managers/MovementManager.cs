@@ -157,16 +157,24 @@ public static class MovementManager {
 
     public static bool CheckIfIsRightAndFindNewPositions(GameObject newBall, BListObject collidingBall, out Vector3 posForNewBall, out Vector3 posForFirstBall, GameObject first)
     {
-        posForFirstBall = FindNewPositionForFirstBallOnBallAdding(first);
-        return GetPosForNewBall(collidingBall, newBall, out posForNewBall, posForFirstBall);
+        posForFirstBall = FindNewPositionForFirstLastBallOnBallAdding(first, 1);
+        Vector3 posForLastBall = FindNewPositionForFirstLastBallOnBallAdding(collidingBall.value, -1);
+
+        return GetPosForNewBall(collidingBall, newBall, out posForNewBall, posForFirstBall, posForLastBall);
     }
 
-    public static Vector3 FindNewPositionForFirstBallOnBallAdding(GameObject first)
+    public static Vector3 FindNewPositionForFirstLastBallOnBallAdding(GameObject first, int firstLast)
     {
         BallObject ballObj = first.GetComponent<BallScript>().ballObj;
         int dest = 0;
         Vector3 newPos = first.transform.position;
         float distance = 0.0f;
+        ballObj.forwardBackward *= firstLast;
+        if (firstLast < 0)
+        {
+            ballObj.destination--;
+            dest++;
+        }
         do
         {
             CalculateLerpVector(ballObj);
@@ -181,17 +189,25 @@ public static class MovementManager {
 
         } while (distance < GameManagerScript.spawningSafeDistance);
 
+        ballObj.forwardBackward *= firstLast;
+
         if (dest > 0)
         {
-            ballObj.destination -= dest;
+            ballObj.destination -= firstLast*dest;
         }
+
 
         return newPos;
     }
-    public static bool GetPosForNewBall(BListObject collidingObject, GameObject newBall, out Vector3 posForNewBall, Vector3 posForFirstBall)
+    public static bool GetPosForNewBall(BListObject collidingObject, GameObject newBall, out Vector3 posForNewBall, Vector3 posForFirstBall, Vector3 posForLastBall)
     {
         bool isRight = false;
-        float distToLeft = (collidingObject.leftNeighbour != null ? Vector3.Distance(collidingObject.leftNeighbour.value.transform.position, newBall.transform.position) : Vector3.Distance(GameManagerScript.levelSpawningPosition, newBall.transform.position));
+        if (Vector3.Distance(collidingObject.value.transform.position, GameManagerScript.levelSpawningPosition) < GameManagerScript.spawningSafeDistance)
+        {
+            posForLastBall = GameManagerScript.levelSpawningPosition;
+        }
+
+        float distToLeft = (collidingObject.leftNeighbour != null ? Vector3.Distance(collidingObject.leftNeighbour.value.transform.position, newBall.transform.position) : Vector3.Distance(posForLastBall, newBall.transform.position));
         float distToRight = (collidingObject.rightNeighbour != null ? Vector3.Distance(collidingObject.rightNeighbour.value.transform.position, newBall.transform.position) : Vector3.Distance(posForFirstBall, newBall.transform.position));
 
         if (distToLeft < distToRight)

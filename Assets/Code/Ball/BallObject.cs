@@ -4,7 +4,7 @@ using System;
 [Serializable]
 public class BallObject {
 
-    private static int[] allowedSpeedLevels = new int[] {9, 100, 1, 80};
+    private static int[] allowedSpeedLevels;
 
     public int actualSpeedLevel;
 
@@ -61,6 +61,8 @@ public class BallObject {
 
     public bool specialMove;
 
+    public bool bonusRollBackInfluence;
+
     public BallObject(Color newColor,  GameObject myObject, int speedLevel)
     {
         this.myObject = myObject;
@@ -101,6 +103,37 @@ public class BallObject {
         actualSpeedLevel = 0;
     }
 
-    
+
+    public static void IncreaseNormalSpeedLevel(int increaser)
+    {
+            allowedSpeedLevels[0] *= increaser;
+    }
+
+    public static void DecreaseNormalSpeedLevels(int decreaser)
+    {
+            allowedSpeedLevels[0] /= decreaser;
+    }
+
+    public void RevertDirection()
+    {
+        bonusRollBackInfluence = !bonusRollBackInfluence;
+        if (bonusRollBackInfluence && actualSpeedLevel == 0)
+        {
+            forwardBackward = -forwardBackward;
+            destination--;
+        }
+
+        if (!bonusRollBackInfluence && actualSpeedLevel == 0)
+        {
+            forwardBackward = -forwardBackward;
+            destination++;
+        }
+    }
+
+    public static void ClearStatic()
+    {
+        allowedSpeedLevels = new int[] { 9, 100, 2, 80 };
+    }
+
 
 }

@@ -19,6 +19,7 @@ public class ControllerBallsScript : MonoBehaviour {
 
     private Valve.VR.EVRButtonId triggerButton = Valve.VR.EVRButtonId.k_EButton_SteamVR_Trigger;
     private Valve.VR.EVRButtonId touchpadButton = Valve.VR.EVRButtonId.k_EButton_SteamVR_Touchpad;
+    private Valve.VR.EVRButtonId gripButton = Valve.VR.EVRButtonId.k_EButton_Grip;
 
     private SteamVR_Controller.Device controller { get { return SteamVR_Controller.Input((int)trackedObj.index); } }
     private SteamVR_TrackedObject trackedObj;
@@ -49,6 +50,7 @@ public class ControllerBallsScript : MonoBehaviour {
     {
         bool isTriggerDown = controller.GetPressDown(triggerButton);
         bool isTouchpadDown = controller.GetPressDown(touchpadButton);
+        bool isGripDown = controller.GetPressDown(gripButton);
         RaycastHit hit;
             Ray ray = new Ray(startPosition.position, startPosition.forward);
             Physics.Raycast(ray, out hit);
@@ -79,6 +81,11 @@ public class ControllerBallsScript : MonoBehaviour {
         if (GameManagerScript.playing && isTouchpadDown)
         {
             TurnColors();
+        }
+
+        if (isGripDown)
+        {
+            PlayStopGame();
         }
     }
 
