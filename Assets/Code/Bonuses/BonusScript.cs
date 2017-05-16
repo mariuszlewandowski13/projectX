@@ -4,9 +4,10 @@ using UnityEngine;
 
 public class BonusScript : MonoBehaviour {
 
-    private Bonus bonusData;
+    public Bonus bonusData;
 
     public bool canWork;
+
     
     public void SetBonusData(Bonus bonus)
     {

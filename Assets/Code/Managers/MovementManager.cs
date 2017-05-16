@@ -144,8 +144,13 @@ public static class MovementManager {
 
     public static void ChangeToNextDestination(BallObject ballObj, bool decrease = true)
     {
-        if ((ballObj.destination = LevelManager.GetNextLevelPoint(ballObj.destination, ballObj.forwardBackward)) < 0)
+        if ((ballObj.destination = LevelManager.GetNextLevelPoint(ballObj.destination, ballObj.forwardBackward)) == - 1)
         {
+            playing = false;
+        }
+        else if (ballObj.destination == -2)
+        {
+           // HideBall()
             playing = false;
         }
         if (decrease && ballObj.forwardBackward > 0)

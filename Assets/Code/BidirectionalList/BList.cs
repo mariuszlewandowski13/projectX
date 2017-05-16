@@ -7,9 +7,6 @@ public class BList  {
     private BListObject actual;
     private BListObject last;
 
-    private bool fromLeft;
-    private bool fromRight;
-
     private object addingLock = new object();
 
     public GameObject Last
@@ -91,8 +88,6 @@ public class BList  {
 
     public GameObject InitEnumerationFromLeft()
     {
-        fromLeft = true;
-        fromRight = false;
         actual = last;
         if (actual != null)
         {
@@ -104,8 +99,6 @@ public class BList  {
 
     public GameObject InitEnumerationFromRight()
     {
-        fromLeft = false;
-        fromRight = true;
         actual = first;
         if (actual != null)
         {
@@ -116,16 +109,12 @@ public class BList  {
 
     public BListObject InitEnumerationFromLeftBListObject()
     {
-        fromLeft = true;
-        fromRight = false;
         actual = last;
         return actual;
     }
 
     public BListObject InitEnumerationFromRightBListObject()
     {
-        fromLeft = false;
-        fromRight = true;
         actual = first;
         return actual;
     }

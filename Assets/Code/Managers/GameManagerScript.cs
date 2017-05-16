@@ -47,6 +47,7 @@ public class GameManagerScript : MonoBehaviour {
     public static float spawningSafeDistance;
 
     private BList balls;
+    private Queue<GameObject> ballsToHide;
     private List<NewBallToAdd> ballsToAdd;
 
     public static Vector3 levelSpawningPosition;
@@ -94,6 +95,7 @@ public class GameManagerScript : MonoBehaviour {
         levelEnded = false;
         _canShoot = false;
         ballsToAdd = new List<NewBallToAdd>();
+        ballsToHide = new Queue<GameObject>();
         BallObject.ClearStatic();
     }
 
@@ -335,6 +337,11 @@ public class GameManagerScript : MonoBehaviour {
             }
             ballObj = actual.value.GetComponent<BallScript>().ballObj;
             ballObj.destination--;
+            if (actual.rightNeighbour.value.GetComponent<BallScript>().ballObj.destination > ballObj.destination && !curveChange)
+            {
+                ballObj.destination++;
+                curveChange = true;
+            }
             ballObj.destinationPosition = posForNewBall;
             ballObj.IncreaseSpeedLevel();
         }
@@ -406,16 +413,7 @@ public class GameManagerScript : MonoBehaviour {
 
         if (actualListObj != null)
         {
-            ballsThatHasToReturnWithSequence.Add(actualListObj);
-            actualListObj.value.AddComponent<BallReturningScript>();
-            Rigidbody rigid = actualListObj.value.AddComponent<Rigidbody>();
-            if (rigid == null)
-            {
-                rigid = actualListObj.value.GetComponent<Rigidbody>();
-            }
-            rigid.useGravity = false;
-            rigid.isKinematic = false;
-            rigid.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+            AddAndConfigureReturningComponents(actualListObj);
         }
 
         if (pivotBall != null)
@@ -433,8 +431,78 @@ public class GameManagerScript : MonoBehaviour {
             actualListObj = actualListObj.leftNeighbour;
         }
 
-        return ballsToRemove;
+        return FindAndUseBonuses(ballsToRemove);
     }
+
+    private List<BListObject> FindAndUseBonuses(List<BListObject> ballsToRem)
+    {
+        List<BListObject> additionalBallsToRemove = new List<BListObject>();
+
+        foreach (BListObject ballObj in ballsToRem)
+        {
+            Transform child = ballObj.value.transform.FindChild("Bonus");
+            if (child != null)
+            {
+                if (child.GetComponent<BonusScript>().bonusData.bonusKind == BonusKind.ballsNeighboursDestroy)
+                {
+                    int neighbourDeleteTreshold = child.GetComponent<BonusScript>().bonusData.range;
+                    BListObject actual = ballObj;
+                    for (int i = 0; i < neighbourDeleteTreshold; ++i)
+                    {
+                        actual = actual.rightNeighbour;
+                        if (actual == null)
+                        {
+                            break;
+                        }
+                        if (!ballsToRem.Contains(actual))
+                        {
+                            additionalBallsToRemove.Add(actual);
+                        }
+                    }
+                    if (actual != null && actual.rightNeighbour != null)
+                    {
+                        AddAndConfigureReturningComponents(actual.rightNeighbour);
+                    }
+
+                    actual = ballObj;
+                    for (int i = 0; i < neighbourDeleteTreshold; ++i)
+                    {
+                        actual = actual.leftNeighbour;
+                        if (actual == null)
+                        {
+                            break;
+                        }
+                        if (!ballsToRem.Contains(actual))
+                        {
+                            additionalBallsToRemove.Add(actual);
+                        }
+                    }
+                }
+            }
+        }
+
+        foreach (BListObject ball in additionalBallsToRemove)
+        {
+            ballsToRem.Add(ball);
+        }
+
+        return ballsToRem;
+    }
+
+    private void AddAndConfigureReturningComponents(BListObject ball)
+    {
+        ballsThatHasToReturnWithSequence.Add(ball);
+        ball.value.AddComponent<BallReturningScript>();
+        Rigidbody rigid;
+        if ((rigid = ball.value.GetComponent<Rigidbody>()) == null)
+        {
+            rigid = ball.value.AddComponent<Rigidbody>();
+        }
+        rigid.useGravity = false;
+        rigid.isKinematic = false;
+        rigid.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+    }
+
     private void RemoveBallsInSequence(GameObject ballInSequence)
     {
         List<BListObject> ballsToRemove = FindBallsInSequence(ballInSequence);

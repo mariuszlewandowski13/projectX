@@ -6,7 +6,8 @@ public enum BonusKind
     slower,
     rollBack,
     colorDestroy,
-    ballsNeighboursDestroy
+    ballsNeighboursDestroy,
+    ballsSphereDestroy
 }
 
 public class Bonus
@@ -19,12 +20,15 @@ public class Bonus
 
     public Color ballColor;
 
-    public Bonus(Color newColor, BonusKind newKind, Color ballColor)
+    public int range;
+
+    public Bonus(Color newColor, BonusKind newKind, Color ballColor, int range)
     {
         color = newColor;
         bonusKind = newKind;
         bonusEndTime = 0.0f;
         this.ballColor = ballColor;
+        this.range = range;
     }
 }
 
@@ -36,6 +40,7 @@ public class BonusManager : MonoBehaviour {
 
     private  System.Random ran = new System.Random();
     private  System.Random ranColors = new System.Random();
+    private System.Random ranRange = new System.Random();
     private  int counter;
 
     private  int counterTreshold;
@@ -117,7 +122,8 @@ public class BonusManager : MonoBehaviour {
         GameObject bonus = Instantiate(bonusObjectPrefab, ball.transform.position, new Quaternion());
         bonus.name = "Bonus";
         bonus.transform.parent = ball.transform;
-        bonus.GetComponent<BonusScript>().SetBonusData(new Bonus(bonusColor, (BonusKind)number, ball.GetComponent<BallScript>().ballObj.color));
+        int range = ranRange.Next(2, 5);
+        bonus.GetComponent<BonusScript>().SetBonusData(new Bonus(bonusColor, (BonusKind)number, ball.GetComponent<BallScript>().ballObj.color, range));
     }
 
     void OnDestroy()
