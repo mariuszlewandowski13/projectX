@@ -15,7 +15,7 @@ public class ControllerBallsScript : MonoBehaviour {
 
     private float lastShotTime;
 
-    private float timeFromShootToSpawn = 0.5f;
+    private float timeFromShootToSpawn = 1.0f;
 
     private Valve.VR.EVRButtonId triggerButton = Valve.VR.EVRButtonId.k_EButton_SteamVR_Trigger;
     private Valve.VR.EVRButtonId touchpadButton = Valve.VR.EVRButtonId.k_EButton_SteamVR_Touchpad;
