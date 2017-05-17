@@ -139,10 +139,10 @@ public class GameManagerScript : MonoBehaviour {
             Clear();
             if (LevelManager.NextLevel())
             {
-                //LoadLevel();
-                //AnimationsManager.PlayLevelStartAnimation(LevelManager.actualLevel);
-                //levelToStart = true;
-                GameObject.Find("Menu").transform.FindChild("NextLevel").gameObject.SetActive(true);
+                LoadLevel();
+                AnimationsManager.PlayLevelStartAnimation(LevelManager.actualLevel);
+                levelToStart = true;
+               // GameObject.Find("Menu").transform.FindChild("NextLevel").gameObject.SetActive(true);
             }
             else {
                 AnimationsManager.PlayGameWonAnimation();
@@ -211,12 +211,15 @@ public class GameManagerScript : MonoBehaviour {
     {
         while (ball != null)
         {
-            if (ball.value.GetComponent<BallScript>().ballObj.forwardBackward > 0)
+            if (ball.value != null)
             {
-                ball.value.GetComponent<BallScript>().ballObj.forwardBackward = -ball.value.GetComponent<BallScript>().ballObj.forwardBackward;
-                ball.value.GetComponent<BallScript>().ballObj.destination--;
-            }
+                if (ball.value.GetComponent<BallScript>().ballObj.forwardBackward > 0)
+                {
+                    ball.value.GetComponent<BallScript>().ballObj.forwardBackward = -ball.value.GetComponent<BallScript>().ballObj.forwardBackward;
+                    ball.value.GetComponent<BallScript>().ballObj.destination--;
+                }
                 ball.value.GetComponent<BallScript>().ballObj.IncreaseSpeedLevel(false);
+            }
                 ball = ball.rightNeighbour; 
         }
     }
