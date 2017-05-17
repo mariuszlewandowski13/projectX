@@ -1,6 +1,6 @@
-﻿
-using UnityEngine;
+﻿using UnityEngine;
 
+[DisallowMultipleComponent]
 public class BallReturningScript : MonoBehaviour {
 
     private object collisionLock = new object();
@@ -8,12 +8,12 @@ public class BallReturningScript : MonoBehaviour {
 
     private void OnTriggerEnter(Collider other)
     {
-        Debug.Log(other.name);
+       // Debug.Log("Other: " + other.name + " , my name: " + gameObject.name);
         lock (collisionLock)
         {
             if (!collide)
             {
-                if (other.tag == "Ball" && other.GetComponent<BallScript>().ballObj.forwardBackward != GetComponent<BallScript>().ballObj.forwardBackward)
+                if (other.tag == "Ball" && ((other.GetComponent<BallScript>().ballObj.forwardBackward != GetComponent<BallScript>().ballObj.forwardBackward) || (other.GetComponent<BallReturningScript>() != null)))
                 {
                     GameObject.Find("GameManager").GetComponent<GameManagerScript>().ChangeBallDirection(gameObject);
                     collide = true;
@@ -30,6 +30,7 @@ public class BallReturningScript : MonoBehaviour {
         {
             DestroyImmediate(GetComponent<Rigidbody>());
             Destroy(this);
+            //Debug.Log(gameObject.name + "    " + Time.time);
         }
 
     }

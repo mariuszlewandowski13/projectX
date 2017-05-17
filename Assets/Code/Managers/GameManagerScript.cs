@@ -107,6 +107,7 @@ public class GameManagerScript : MonoBehaviour {
         CheckAndLoadNewLevel();
         CheckAndPlay();
         CheckAndAddNextBall();
+        Debugging();
     }
 
     private void CheckAndAddNextBall()
@@ -139,10 +140,10 @@ public class GameManagerScript : MonoBehaviour {
             Clear();
             if (LevelManager.NextLevel())
             {
-                LoadLevel();
-                AnimationsManager.PlayLevelStartAnimation(LevelManager.actualLevel);
-                levelToStart = true;
-               // GameObject.Find("Menu").transform.FindChild("NextLevel").gameObject.SetActive(true);
+                //LoadLevel();
+                //AnimationsManager.PlayLevelStartAnimation(LevelManager.actualLevel);
+                //levelToStart = true;
+                GameObject.Find("Menu").transform.FindChild("NextLevel").gameObject.SetActive(true);
             }
             else {
                 AnimationsManager.PlayGameWonAnimation();
@@ -201,8 +202,6 @@ public class GameManagerScript : MonoBehaviour {
             {
                 SetBallsToReturn(ball);
             }
-            
-           // MovementManager.specialMove = true;
         }
         ballsThatHasToReturnWithSequence.Clear();
     }
@@ -213,6 +212,7 @@ public class GameManagerScript : MonoBehaviour {
         {
             if (ball.value != null)
             {
+                //Debug.Log(ball.value.name);
                 if (ball.value.GetComponent<BallScript>().ballObj.forwardBackward > 0)
                 {
                     ball.value.GetComponent<BallScript>().ballObj.forwardBackward = -ball.value.GetComponent<BallScript>().ballObj.forwardBackward;
@@ -272,6 +272,15 @@ public class GameManagerScript : MonoBehaviour {
         {
             ballCreated(newBall);
         }
+
+        if (ballsCount == 1)
+        {
+            if (deleteSequence != null)
+            {
+                deleteSequence(GetAllColorsOnBoard());
+            }
+        }
+
     }
 
     private bool CheckSpawningSafe()
@@ -416,6 +425,7 @@ public class GameManagerScript : MonoBehaviour {
 
         if (actualListObj != null)
         {
+           // Debug.Log(actualListObj.value.name + "    " + Time.time);
             AddAndConfigureReturningComponents(actualListObj);
         }
 
@@ -460,6 +470,11 @@ public class GameManagerScript : MonoBehaviour {
                         if (!ballsToRem.Contains(actual))
                         {
                             additionalBallsToRemove.Add(actual);
+                            if (ballsThatHasToReturnWithSequence.Contains(actual))
+                            {
+                                ballsThatHasToReturnWithSequence.Remove(actual);
+                            }
+
                         }
                     }
                     if (actual != null && actual.rightNeighbour != null)
@@ -494,16 +509,19 @@ public class GameManagerScript : MonoBehaviour {
 
     private void AddAndConfigureReturningComponents(BListObject ball)
     {
-        ballsThatHasToReturnWithSequence.Add(ball);
-        ball.value.AddComponent<BallReturningScript>();
-        Rigidbody rigid;
-        if ((rigid = ball.value.GetComponent<Rigidbody>()) == null)
+        if (!ballsThatHasToReturnWithSequence.Contains(ball) && ball.value.GetComponent<BallReturningScript>() == null)
         {
-            rigid = ball.value.AddComponent<Rigidbody>();
+            ballsThatHasToReturnWithSequence.Add(ball);
+            ball.value.AddComponent<BallReturningScript>();
+            Rigidbody rigid;
+            if ((rigid = ball.value.GetComponent<Rigidbody>()) == null)
+            {
+                rigid = ball.value.AddComponent<Rigidbody>();
+            }
+            rigid.useGravity = false;
+            rigid.isKinematic = false;
+            rigid.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         }
-        rigid.useGravity = false;
-        rigid.isKinematic = false;
-        rigid.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
     }
 
     private void RemoveBallsInSequence(GameObject ballInSequence)
@@ -521,29 +539,34 @@ public class GameManagerScript : MonoBehaviour {
     {
         
         BListObject listObj = balls.Find(ball);
-        listObj.mustBeCenterPoint = true;
-
-        while (listObj != null && (listObj.value == ball || listObj.value.GetComponent<BallReturningScript>() == null))
+        if (listObj != null)
         {
-            if (!listObj.value.GetComponent<BallScript>().ballObj.bonusRollBackInfluence)
+            listObj.mustBeCenterPoint = true;
+
+            while (listObj != null && (listObj.value == ball || listObj.value.GetComponent<BallReturningScript>() == null))
             {
-                listObj.value.GetComponent<BallScript>().ballObj.forwardBackward = -listObj.value.GetComponent<BallScript>().ballObj.forwardBackward;
-                listObj.value.GetComponent<BallScript>().ballObj.destination++;
-            }
-            MovementManager.CalculateLerpVector(listObj.value.GetComponent<BallScript>().ballObj);
-            if (listObj.leftNeighbour != null)
-            {
-                listObj.value.GetComponent<BallScript>().ballObj.actualSpeedLevel++;
-                while (Vector3.Distance(listObj.value.transform.position, listObj.leftNeighbour.value.transform.position) < spawningSafeDistance)
+
+                    if (listObj.value.GetComponent<BallScript>().ballObj.forwardBackward < 0)
+                    {
+                        listObj.value.GetComponent<BallScript>().ballObj.forwardBackward = -listObj.value.GetComponent<BallScript>().ballObj.forwardBackward;
+                        listObj.value.GetComponent<BallScript>().ballObj.destination++;
+                    }
+
+                MovementManager.CalculateLerpVector(listObj.value.GetComponent<BallScript>().ballObj);
+                if (listObj.leftNeighbour != null)
                 {
-                    MovementManager.MoveBall(listObj);
+                    listObj.value.GetComponent<BallScript>().ballObj.actualSpeedLevel++;
+                    while (Vector3.Distance(listObj.value.transform.position, listObj.leftNeighbour.value.transform.position) < spawningSafeDistance)
+                    {
+                        MovementManager.MoveBall(listObj);
+                    }
+                    listObj.value.GetComponent<BallScript>().ballObj.actualSpeedLevel--;
                 }
-                listObj.value.GetComponent<BallScript>().ballObj.actualSpeedLevel--;
+                listObj.value.GetComponent<BallScript>().ballObj.DecreaseSpeedLevel();
+                listObj = listObj.rightNeighbour;
             }
-            listObj.value.GetComponent<BallScript>().ballObj.DecreaseSpeedLevel();
-            listObj = listObj.rightNeighbour;
+            ballsThatCouldBeInSequence.Add(balls.Find(ball));
         }
-        ballsThatCouldBeInSequence.Add(balls.Find(ball));
     }
 
     public List<Color> GetAllColorsOnBoard()
@@ -631,6 +654,23 @@ public class GameManagerScript : MonoBehaviour {
             {
                 deleteSequence(GetAllColorsOnBoard());
             }
+        }
+    }
+
+    private void Debugging()
+    {
+        if (Input.GetKeyDown(KeyCode.N))
+        {
+            string names = "";
+            BListObject actual = balls.InitEnumerationFromLeftBListObject();
+            if (actual != null)
+            {
+                do
+                {
+                    names += actual.value.name + ", ";
+                } while ((actual = balls.NextBListObject()) != null);
+            }
+            Debug.Log(names);
         }
     }
 

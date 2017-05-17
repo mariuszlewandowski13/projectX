@@ -4,9 +4,9 @@ using System.Collections.Generic;
 public enum BonusKind
 {
     slower,
-    rollBack,
     colorDestroy,
     ballsNeighboursDestroy,
+    rollBack,
     ballsSphereDestroy
 }
 
@@ -36,7 +36,7 @@ public class BonusManager : MonoBehaviour {
 
     public GameObject bonusObjectPrefab;
 
-    private Color[] bonusesColors = new Color[] { Color.black, Color.gray, Color.magenta, Color.cyan };
+    private Color[] bonusesColors = new Color[] { Color.black, Color.gray, Color.magenta/*, Color.cyan*/ };
 
     private  System.Random ran = new System.Random();
     private  System.Random ranColors = new System.Random();
@@ -44,7 +44,7 @@ public class BonusManager : MonoBehaviour {
     private  int counter;
 
     private  int counterTreshold;
-    private  int randTreshold = 10;
+    private  int randTreshold = 13;
 
     private static List<Bonus> actualBonuses;
 
@@ -136,9 +136,12 @@ public class BonusManager : MonoBehaviour {
     {
         lock(useBonusLock)
         {
-            if (CheckBonusCanBeUsed(newBonus))
+            if (!CheckIfListContainsBonus(newBonus))
             {
                 UseBonus(newBonus);
+            }
+            else {
+                FindAndRefreshBonus(newBonus);
             }
         }
     }
@@ -150,6 +153,8 @@ public class BonusManager : MonoBehaviour {
             if (bonus.bonusKind == BonusKind.slower)
             {
                 BallObject.DecreaseNormalSpeedLevels(3);
+                bonus.bonusEndTime = Time.time + bonusDurationTime;
+                actualBonuses.Add(bonus);
             }
 
             //if (bonus.bonusKind == BonusKind.rollBack)
@@ -161,26 +166,19 @@ public class BonusManager : MonoBehaviour {
             {
                 GameObject.Find("GameManager").GetComponent<GameManagerScript>().DestroyBallsWithSpecificColor(bonus.ballColor);
             }
-
-            if (bonus.bonusKind <= BonusKind.rollBack)
-            {
-                bonus.bonusEndTime = Time.time + bonusDurationTime;
-                actualBonuses.Add(bonus);
-            }
         }
         
     }
 
-    private static bool CheckBonusCanBeUsed(Bonus bonus)
+    private static void FindAndRefreshBonus(Bonus bonus)
     {
-        if (bonus.bonusKind <= BonusKind.rollBack)
+        foreach (Bonus bon in actualBonuses)
         {
-            if (CheckIfListContainsBonus(bonus))
+            if (bon.bonusKind == bonus.bonusKind)
             {
-                return false;
+                bon.bonusEndTime = Time.time + bonusDurationTime;
             }
         }
-        return true;
     }
 
     private static bool CheckIfListContainsBonus(Bonus bonus)

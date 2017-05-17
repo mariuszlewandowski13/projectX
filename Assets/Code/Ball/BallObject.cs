@@ -132,7 +132,7 @@ public class BallObject {
 
     public static void ClearStatic()
     {
-        allowedSpeedLevels = new int[] { 9, 100, 2, 80 };
+        allowedSpeedLevels = new int[] { 12, 100, 2, 80 };
     }
 
 
